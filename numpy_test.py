@@ -25,5 +25,18 @@ print 'data', words.data
 
 a = np.arange(15)
 print 'arange', a
-print 'reshape',a.reshape(3,5)
+ar = a.reshape(3,5)
+print 'reshape', ar
 
+ar = np.zeros( (7,8) )
+ar[3][5] = 0.7
+print 'zeros',ar
+
+words = np.array(['aaa','bbb','ccc','ddd'])
+ar = np.array([1,2,3,4])
+print words[ar==1]
+
+a = np.array([[4,9,2],[5,1,3]])
+idx = np.argsort(a[1])
+print idx
+print a[:,idx]

@@ -46,6 +46,7 @@ centroids = k.cluster_centers_
 labels = k.labels_
 print labels
 
+print 'lables',labels==1
 for i in range(np.max(labels)):
     print words[labels==i]
 
