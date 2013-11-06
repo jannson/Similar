@@ -70,6 +70,7 @@ lsi_model_2.save('wiki_en_model.lsi')
 
 #lsi_model_2 .print_topics(5)
 
+'''
 topic_id = 0
 for topic in lsi_model_2.show_topics():
     print "TOPIC (LSI2) " + str(topic_id) + " : " + topic
@@ -77,6 +78,7 @@ for topic in lsi_model_2.show_topics():
     group_topic = [doc for doc in corpus_lsi_2]
     print str(group_topic)
     topic_id+=1
+'''
 
 
 
