@@ -7,17 +7,10 @@ from collections import defaultdict
 import json
 from scipy.cluster.hierarchy import dendrogram, linkage, fcluster, ward
 from sklearn.cluster.affinity_propagation_ import affinity_propagation
+from sklearn.cluster import KMeans, AffinityPropagation
 from sklearn.cluster import KMeans
 import numpy as np
 import codecs
-
-django_path = '/home/gan/project/source/svn_project/pull/1'
-sys.path.insert(13, django_path)
-os.environ['DJANGO_SETTINGS_MODULE'] = 'pull.settings'
-
-from django.db.models import Count
-from django.db.models import Q
-from pull.models import HtmlContent
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(levelname)s:%(name)s:%(threadName)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -41,11 +34,7 @@ def load_gensim_tools():
 
     return dictionary, tfidf_transformation, lsi_transformation
 
-def create_corpus():
-    #return [word2id.doc2bow(gensim.utils.tokenize(text, lower=True)) for text in docs]
-    return corpora.MmCorpus(CORPUS_FILE)
-
-def create_index(corpus, tfidf_transformation, lsi_transformation):
+def create_index(corpus):
     """Create an index given a corpus and transformation(s).
         :param corpus: The index corpus (documents against which new unseen documents will be compared)
         :param tfidf_transformation: A vector space transformation model
@@ -58,7 +47,7 @@ def create_index(corpus, tfidf_transformation, lsi_transformation):
 
     # Create the index
     index = similarities.Similarity(index_dir + "/shard",
-        corpus=lsi_transformation[tfidf_transformation[corpus]],
+        corpus=corpus,
         num_features=400,  # TODO don't hard code this
     )
 
@@ -66,14 +55,27 @@ def create_index(corpus, tfidf_transformation, lsi_transformation):
 
 if __name__ == "__main__":
     dictionary, tfidf_transformation, lsi_transformation = load_gensim_tools()
-    corpus = create_corpus()
-    index = create_index(corpus, tfidf_transformation, lsi_transformation)
 
-    tfidf_vec_doc = tfidf_transformation[corpus]
-    lsi_vec_doc = lsi_transformation[tfidf_vec_doc]
-    #lsi_transformation.print_topics(10)
-    
-    index_doc = index[lsi_vec_doc]
+    #cluster_centers_indices, labels = affinity_propagation(lsi_transformation.projection.u)
+
+    #af = AffinityPropagation(affinity="euclidean").fit(lsi_transformation.projection.u)
+    #luster_centers_indices = af.cluster_centers_indices_
+    #labels = af.labels_
+
+    #k = KMeans(init='k-means++', n_init=10)
+    #k.fit(lsi_transformation.projection.u)
+    #centroids = k.cluster_centers_
+    #labels = k.labels_
+
+    #for i, label in enumerate(labels):
+    #    print '(',i, label,')'
+    #    if i > 100:
+    #        break
+
+    term_corpus = gensim.matutils.Dense2Corpus(lsi_transformation.projection.u.T)
+    index = create_index(term_corpus)
+
+    index_doc = index[term_corpus]
     sims = [s for s in index_doc]
 
     cluster_centers_indices, labels = affinity_propagation(sims)
@@ -84,16 +86,7 @@ if __name__ == "__main__":
     #centroids = k.cluster_centers_
     #labels = k.labels_
 
-    docs = []
-    for obj in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
-        docs.append(obj.title)
-
-    doc_arr = np.array(range(len(labels)))
-
-    with codecs.open('zzz2','w','utf-8') as file:
-        for i in range(np.max(labels)):
-            output = 'group:'+str(i+1)+'\n'
-            for doc_num in doc_arr[labels==i]:
-                output += docs[doc_num] + ' / '
-            output += '\n'
-            file.write(output)
+    for i, label in enumerate(labels):
+        print label,
+        if i > 100:
+            break

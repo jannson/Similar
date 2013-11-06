@@ -33,7 +33,7 @@ def iter_documents():
 class MyCorpus(object):
     def __init__(self):
         self.dictionary = gensim.corpora.Dictionary(iter_documents())
-        self.dictionary.filter_extremes(no_below=1, keep_n=30000) # check API docs for pruning params
+        self.dictionary.filter_extremes(no_below=1, keep_n=5000) # check API docs for pruning params
         self.dictionary.save_as_text('wiki_en_wordids.txt')
 
     def __iter__(self):
