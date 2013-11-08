@@ -21,6 +21,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'pull.settings'
 from django.db.models import Count
 from django.db.models import Q
 from pull.models import *
+from cppjiebapy import Tokenize
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -28,7 +29,8 @@ def iter_documents():
     """Iterate over all documents, yielding a document (=list of utf8 tokens) at a time."""
     for obj in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
         document = obj.content
-        yield gensim.utils.tokenize(document, lower=True) # or whatever tokenization suits you
+        #yield gensim.utils.tokenize(document, lower=True) # or whatever tokenization suits you
+        yield [s for s in Tokenize(document)]
 
 class MyCorpus(object):
     def __init__(self):
@@ -63,7 +65,7 @@ tfidf_model.save('wiki_en_tfidf.model')
 corpus_tfidf = tfidf_model[corpus]
 
 lsi_model_2 = LsiModel(corpus_tfidf, id2word=corpus.dictionary, num_topics=300)
-corpus_lsi_2 = lsi_model_2[corpus]
+#corpus_lsi_2 = lsi_model_2[corpus]
 print "Done creating models"
 
 lsi_model_2.save('wiki_en_model.lsi')

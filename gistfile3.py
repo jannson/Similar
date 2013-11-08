@@ -11,6 +11,7 @@ from sklearn.cluster import KMeans, AffinityPropagation
 from sklearn.cluster import KMeans
 import numpy as np
 import codecs
+import heapq
 
 logging.basicConfig(stream=sys.stdout, level=logging.INFO, format="%(levelname)s:%(name)s:%(threadName)s: %(message)s")
 logger = logging.getLogger(__name__)
@@ -53,40 +54,71 @@ def create_index(corpus):
 
     return index
 
+def print_sims(query):
+    sims = index[query]
+    
+    result = []
+    for i in np.argsort(sims)[::-1]:
+        if abs(sims[i]) > 1e-10:
+            result.append((i,sims[i]))
+            if len(result) == 10:
+                break
+
+    #result = heapq.nlargest(10, sims)
+    #print result
+
+    #fmt = ["%s(%f)" % (dictionary[idother], sim) for idother,sim in enumerate(sims)]
+    fmt = ["%s(%f)" % (dictionary[idother], sim) for idother,sim in result]
+    print "the query is similar to ", ','.join(fmt)
+
+def print_group(index_term):
+    with codecs.open('zzz2','w','utf-8') as file:
+        for sims in index_term:
+            result = []
+            for i in np.argsort(sims)[::-1]:
+                if abs(sims[i]) > 1e-10:
+                    result.append((i,sims[i]))
+                    if len(result) == 10:
+                        break
+            fmt = ["%s(%f)" % (dictionary[idother], sim) for idother,sim in result]
+            str_term = ','.join(fmt) + '\n'
+            file.write(str_term.decode('utf-8'))
+
 if __name__ == "__main__":
     dictionary, tfidf_transformation, lsi_transformation = load_gensim_tools()
 
-    #cluster_centers_indices, labels = affinity_propagation(lsi_transformation.projection.u)
+    term_corpus = gensim.matutils.Dense2Corpus(lsi_transformation.projection.u.T)
+    index = create_index(term_corpus)
+
+    #Search the similiar words
+    #query = list(term_corpus)[0]
+    #print_sims(query)
+   
+    print 'begin index'
+    index_term = index[term_corpus]
+    #sims = [s for s in index_term]
+    print 'output group'
+    print_group(index_term)
+    
+    #print 'begin affinity'
+    #cluster_centers_indices, labels = affinity_propagation(sims)
 
     #af = AffinityPropagation(affinity="euclidean").fit(lsi_transformation.projection.u)
     #luster_centers_indices = af.cluster_centers_indices_
     #labels = af.labels_
+    #print labels.shape
 
     #k = KMeans(init='k-means++', n_init=10)
     #k.fit(lsi_transformation.projection.u)
     #centroids = k.cluster_centers_
     #labels = k.labels_
-
-    #for i, label in enumerate(labels):
-    #    print '(',i, label,')'
-    #    if i > 100:
-    #        break
-
-    term_corpus = gensim.matutils.Dense2Corpus(lsi_transformation.projection.u.T)
-    index = create_index(term_corpus)
-
-    index_doc = index[term_corpus]
-    sims = [s for s in index_doc]
-
-    cluster_centers_indices, labels = affinity_propagation(sims)
     
-    #print 'start kmeans calcing'
-    #k = KMeans(init='k-means++', n_init=10)
-    #k.fit(sims)
-    #centroids = k.cluster_centers_
-    #labels = k.labels_
+    #print 'begin output'
+    #doc_arr = np.array(range())
+    #for i in range(np.max(labels)):
+    #    print 'group:', (i+1)
+    #    for doc_num in doc_arr[labels==i]:
+    #        print dictionary[doc_num] + '/',
+    #    print '\n'
 
-    for i, label in enumerate(labels):
-        print label,
-        if i > 100:
-            break
+    

@@ -83,14 +83,14 @@ if __name__ == "__main__":
     #k.fit(sims)
     #centroids = k.cluster_centers_
     #labels = k.labels_
-
+    
     docs = []
     for obj in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
-        docs.append(obj.title)
+        docs.append(obj.title.split('|')[0])
 
     doc_arr = np.array(range(len(labels)))
 
-    with codecs.open('zzz2','w','utf-8') as file:
+    with codecs.open('zzz','w','utf-8') as file:
         for i in range(np.max(labels)):
             output = 'group:'+str(i+1)+'\n'
             for doc_num in doc_arr[labels==i]:
