@@ -41,3 +41,13 @@ idx = np.argsort(a[1])
 print idx
 print idx[::-1]
 print a[:,idx]
+print '\n'
+
+a = np.array([[1,2,3],[4,5,6]])
+b = np.array([[7,8],[9,10],[11,12]])
+#print np.dot(a, b)
+#print np.outer(a,b)
+#print np.mean(a)
+#print a.mean(axis=0)
+print b[[1,1,0]]
+
