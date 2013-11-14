@@ -1,6 +1,5 @@
 import numpy as np
 
-
 words = np.array(
     ['the', 'be', 'to', 'of', 'and', 'a', 'in', 'that', 'have',
      'I', 'it', 'for', 'not', 'on', 'with', 'he', 'as', 'you',
