@@ -10,7 +10,7 @@ from webcrawl.items import WebcrawlItem
 import urlparse
 from scrapy.utils.url import urljoin_rfc
 
-from pull import text_extract as tex
+import extract as tex
 
 html_remove = re.compile(r'\s*<.*?>\s*',re.I|re.U|re.S)
 
