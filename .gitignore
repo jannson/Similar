@@ -38,3 +38,8 @@ nosetests.xml
 wiki_*
 zzz*
 *.txt
+*.model
+*.dict
+*.mm
+*.lsi
+*.npy

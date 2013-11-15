@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+<title>接口测试</title>
+<script type="text/javascript" src="http://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js"></script>
+<style type="text/css">
+div#container{width:100%;}
+div#header {background-color:#99bbbb;}
+div#menu {background-color:#ffff99; height:200px; width:25%; float:left;}
+div#content {background-color:#EEEEEE; float:right;width:73%;}
+div#footer {background-color:#99bbbb; clear:both; text-align:center;}
+h1 {margin-bottom:0;}
+h2 {margin-bottom:0; font-size:14px;}
+ul {margin:0;}
+li {list-style:none;}
+</style>
+</head>
+
+<body>
+
+<div id="container">
+
+<div id="header">
+<h1>接口测试页面</h1>
+</div>
+
+<div id="menu">
+    <h2>菜单</h2><br/>
+<div>
+输入：<br/>
+<input type="text" class="search" value="http://" name="text_get" id="text_get"> <input type="button" onclick="html_to_text()" value="获取正文" class="btn">
+</div>
+<div style="margin:10px 0px 5px 0px;">
+<ul>
+<li><a href='javascript:show_content()'>正文</a></li>
+<li><a href='javascript:show_preview()'>预览</a></li>
+</ul>
+</div>
+</div>
+
+<div id="content">
+    <h3>标题：</h3><div id="mainTitle"></div>
+    <h3>关键字：</h3><div id="divKeywords"></div>
+    <h3>摘要：</h3><div id="divDesc"></div>
+<h3>内容：</h3>
+<div id="divContent">输入链接地址</div>
+</div>
+
+<div id="footer">Copyright Janson </div>
+
+</div>
+<script>
+    MAIN_URL = 'http://192.168.1.36:8080';
+    //MAIN_URL = 'http://www.v-find.com';
+    //MAIN_URL = 'http://yaha.v-find.com:8080';
+    this_data = {'title':'','tags':'','desc':'','content':'','results':''};
+
+    function show_content() {
+        $("#divContent").html(this_data.content);
+    }
+    function show_preview() {
+        $("#divContent").html(this_data.results);
+    }
+    
+    function process_url(url, timeout) {
+        $.ajax({
+            type:'get',
+            //async:false,
+            url: MAIN_URL+'/p/?url='+escape(url),
+            dataType: "jsonp",
+            jsonp:'jsonpCallback',
+            jsonpCallback:'jsonpCallback',
+            success: function(data) {
+                info = $("#divContent").html();
+                $("#divContent").html(info+'.');
+                
+                if(data.status == '200') {
+                    this_data = data
+                    $("#mainTitle").html(data.title);
+                    $("#divKeywords").html(data.tags);
+                    $("#divDesc").html(data.desc);
+                    $("#divContent").html(data.results);
+                }
+                else if(data.status == '202') {
+                    setTimeout(function(){
+                        process_url(url, 2000);
+                        }, timeout);
+                }
+                else {
+                    $("#divContent").html('Error' + data.status);
+                }
+            },
+            error: function( req, status, err ) {
+                $("#divContent").html('Error');
+            }
+        });
+    }
+    
+    function html_to_text(){
+        url = $("#text_get").val().toLowerCase();
+		if(url.indexOf('http://') < 0) {
+			if(url.indexOf('www.') < 0) {
+				url = 'http://www.'+url;
+			}
+			else {
+				url = 'http://'+url;
+			}
+		}
+		$("#divContent").html('Processing...');
+        process_url(url, 4000);
+    }
+  </script>
+</body>
+</html>

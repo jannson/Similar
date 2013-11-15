@@ -19,6 +19,7 @@ from django.db.models import Q
 from settings import *
 from pull.models import *
 from extract import TextExtract, TextToHtml, ContentEncodingProcessor, USER_AGENT
+from summ import summarize
 
 if not sae_debug:
     import sae.mail
@@ -61,19 +62,6 @@ def proxy_task(id):
             ucontent = content.decode('utf-8')
         except UnicodeDecodeError:
             ucontent = content.decode('gbk','ignore')
-        head = re_head.search(ucontent)
-        if head:
-            head_str = head.group()
-            keywords = re_keywords.search(head_str)
-            if keywords:
-                html.tags = keywords.group(1)
-            else:
-                html.tags = ''
-            desc = re_desc.search(head_str)
-            if desc:
-                html.summerize = desc.group(1)[0:150]
-            else:
-                html.summerize = ''
         #print 'parsing'
         tx = TextExtract(ucontent)
         #print 'parsed'
@@ -83,8 +71,7 @@ def proxy_task(id):
             print 'Parse html error'
             html.retry = 3
         else:
-            s_len = len(html.summerize)
-            html.summerize += html.content[s_len:(150-s_len)].replace('\n','')
+            html.tags,html.summerize = summarize(html.content)
             if len(html_remove.sub('', tx.preview)) < 250:
                 html.preview = TextToHtml(tx.content)
             else:
@@ -131,7 +118,8 @@ def json_response(func):
     return decorator
 
 def html_to_json(html):
-    the_data = {'status':'200', 'title':html.title, 'tags':html.tags, 'desc':html.summerize, 'results': html.preview}
+    the_data = {'status':'200', 'title':html.title, 'tags':html.tags, 'desc':html.summerize\
+            , 'content':TextToHtml(html.content), 'results': html.preview}
     return the_data
 
 @json_response
@@ -172,3 +160,6 @@ def NewsSubject(request, id):
         return render_to_response('news_subject.html', {'entry':obj})
     except:
         return HttpResponse('No find!')
+
+def test_page(request):
+    return render_to_response('test.html')
