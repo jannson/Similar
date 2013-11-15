@@ -50,6 +50,24 @@ else:
     #db_port = 'SAE_MYSQL_PORT'
     #db_host_s = 'SAE_MYSQL_HOST_S'
 
+RQ_QUEUES = {
+    'default': {
+        'HOST':'localhost',
+        'PORT':6379,
+        'DB':0,
+        'PASSWORD':'',
+    },
+    'high':{
+        'URL': os.getenv('REDISTOGO_URL','redis://localhost:6379'),
+        'DB':0,
+    },
+    'low':{
+        'HOST':'localhost',
+        'PORT':6379,
+        'DB':0,
+    }
+}
+
 DATABASES = {
     "default": {
         # Add "postgresql_psycopg2", "mysql", "sqlite3" or "oracle".
@@ -178,6 +196,7 @@ INSTALLED_APPS = (
     'django.contrib.admin',
     # Uncomment the next line to enable admin documentation:
     # 'django.contrib.admindocs',
+    'django_rq',
     'endless_pagination',
     'pull',
 )

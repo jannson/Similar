@@ -11,6 +11,8 @@ from django.db import connection
 #import simplejson as json
 import json
 import urllib2
+import django_rq
+from rq.job import Job
 
 from django.db.models import Q
 
@@ -23,13 +25,15 @@ if not sae_debug:
     from sae.taskqueue import add_task
     from sae.storage import Bucket
 
+default_queue = django_rq.get_queue('default')
+
 html_remove = re.compile(r'\s*<.*?>\s*',re.I|re.U|re.S)
 re_head = re.compile(r'<[head^>]*>.*</head>', re.I|re.U|re.S)
 re_keywords = re.compile(r'<meta\s+name=[\'"]keywords[\'"]\s+content\s*=\s*[\'"]([^\'"]+)[\'"][^>]*>', re.I|re.U|re.S)
 re_desc = re.compile(r'<meta\s+name=[\'"]description[\'"]\s+content\s*=\s*[\'"]([^\'"]+)[\'"][^>]*>', re.I|re.U|re.S)
 #USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.54 Safari/536.5'
 
-def task_to(request, id):
+def proxy_task(id):
     try:
         html = HtmlContent.objects.get(pk=id)
         #print 'html content', html.content
@@ -88,7 +92,11 @@ def task_to(request, id):
 
     #print html.id, html.title, html.tags, html.summerize
     html.save()
-    if html.retry == 3:
+    return html.retry
+
+def task_to(request, id):
+    retry = proxy_task(id)
+    if retry == 3:
         return HttpResponse('error')
     return HttpResponse('ok')
 
@@ -135,7 +143,10 @@ def proxy_to(request, path):
     except:
         html = HtmlContent(url=url, retry=0)
         html.save()
-        add_task('default', '%s/task/%d' % (BASE_URL, html.id))
+
+        job = default_queue.enqueue(proxy_task, html.id)
+        #add_task('default', '%s/task/%d' % (BASE_URL, html.id))
+
         # wait for processing
         #print 'wait for processing'
         return {'status':'202'}
