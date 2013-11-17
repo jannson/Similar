@@ -30,8 +30,8 @@ if sae_debug:
     db_name = "pull"
     db_user = "pull"
     db_pass = "pull"
-    db_host = "192.168.57.47"
-    #db_host = "localhost"
+    #db_host = "192.168.57.47"
+    db_host = "localhost"
     db_host_s = db_host
     db_port = "3306"
 else:

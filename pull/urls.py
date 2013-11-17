@@ -19,5 +19,6 @@ urlpatterns = patterns('',
     url(r'^admin/', include(admin.site.urls)),
     url(r'^p/(?P<path>.*)$', proxy_to),
     url(r'^task/(?P<id>\d+)$', task_to),
+    url(r'^like/(?P<path>.*)$', like_models),
     url(r'^test$', test_page),
 )

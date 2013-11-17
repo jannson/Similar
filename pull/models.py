@@ -16,3 +16,6 @@ class HtmlContent(models.Model):
     summerize = models.CharField(max_length=400)
     content = models.TextField()
     preview = models.TextField()
+
+    def get_title(self):
+        return re.split(r'[-_|]', self.title)[0]

@@ -12,7 +12,7 @@
 {% paginate object_list %}
     {% for obj in object_list %}
         <p>
-        <a href="/new/{{ obj.id }}/" alt='{{obj.title}}' target='blank'>{{obj.title}}</a><br/>  
+        <a href="/new/{{ obj.id }}/" alt='{{obj.get_title}}' target='blank'>{{obj.get_title}}</a><br/>  
             {{ obj.summerize|safe }}
         </p>  
         {% endfor %}

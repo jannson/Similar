@@ -18,7 +18,13 @@ from gensim import matutils,corpora
 import cppjiebapy
 from cppjiebapy import Tokenize
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+import gensim
+from gensim import models, corpora, similarities
+from simserver import SessionServer
+
+from pull.models import *
+
+#logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 #print sys.getdefaultencoding()
 
@@ -175,6 +181,28 @@ def summarize3(txt):
                    if score > avg + 0.5 * std]
     mean_scored_summary=[sentences[idx] for (idx, score) in mean_scored]
     return u'。 '.join(mean_scored_summary) + u'。 '
+
+server = SessionServer('/tmp/server')
+def sim_search(content):
+    doc = {}
+    doc['tokens'] = [s for s in Tokenize(content)]
+    model_pks = []
+    scores = []
+    for result in server.find_similar(doc)[:40]:
+        id = int(result[0].split('_')[1])
+        model_pks.append(id)
+        scores.append(result[1])
+    objs = []
+    bulk_objs = HtmlContent.objects.in_bulk(model_pks)
+    for k,v in enumerate(model_pks):
+        objs.append((bulk_objs[v],scores[k]))
+    return objs
+
+def sim_index(obj):
+    doc = {}
+    doc['id'] = 'html_%d' % obj.id
+    doc['tokens'] = [s for s in Tokenize(obj.content)]
+    server.index([doc])
 
 def test():
     with open(os.path.join(copus_path, 'Sample/C000007/10.txt')) as file:

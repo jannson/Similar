@@ -15,7 +15,9 @@ import codecs
 from cppjiebapy import Tokenize
 from simserver import SessionServer
 
-django_path = '/home/gan/project/source/svn_project/pull/1'
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+
+django_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(13, django_path)
 os.environ['DJANGO_SETTINGS_MODULE'] = 'pull.settings'
 
@@ -33,21 +35,37 @@ def iter_documents():
         yield doc
 
 server = SessionServer('/tmp/server')
-#training_corpus = list(iter_documents())
+#training_corpus = iter_documents()
 #server.train(training_corpus, method='lsi')
-print 'train finished'
+#print 'train finished'
 #server.index(training_corpus)
-print 'index finished'
+#print 'index finished'
 #server.commit()
 
-obj = HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content=''))[0]
-doc = {}
-#content = obj.content[50:100]
-print obj.content[50:100]
-content = 'Google facebook 深圳'
-print content
-doc['tokens'] = [s for s in Tokenize(content)]
-for result in server.find_similar(doc):
-    id = int(result[0].split('_')[1])
-    obj = HtmlContent.objects.get(pk=id)
-    print "%s(%f) / " % (obj.title.split('|')[0],result[1]),
+def search(content):
+    doc = {}
+    doc['tokens'] = [s for s in Tokenize(content)]
+    model_pks = []
+    scores = []
+    for result in server.find_similar(doc):
+        id = int(result[0].split('_')[1])
+        model_pks.append(id)
+        scores.append(result[1])
+    objs = []
+    bulk_objs = HtmlContent.objects.in_bulk(model_pks)
+    for k,v in enumerate(model_pks):
+        objs.append((bulk_objs[v],scores[k]))
+
+    return objs
+
+content = u'市国税局推出推进出口货物跨部门合作机制'
+for v,score in search(content):
+    print "%s(%f) / " % (v.title.split('|')[0],score),
+
+'''class SearchQuerySet(object):
+    def __init__(self, content):
+    def __len__(self):
+    def __iter__(self):
+    def __getitem__(self, k):
+    def count(self):
+        return len(self)'''

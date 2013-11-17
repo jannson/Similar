@@ -19,7 +19,7 @@ from django.db.models import Q
 from settings import *
 from pull.models import *
 from extract import TextExtract, TextToHtml, ContentEncodingProcessor, USER_AGENT
-from summ import summarize
+from summ import summarize, sim_index, sim_search
 
 if not sae_debug:
     import sae.mail
@@ -79,6 +79,10 @@ def proxy_task(id):
 
     #print html.id, html.title, html.tags, html.summerize
     html.save()
+    if html.retry != 3:
+        print 'begin sim_index'
+        sim_index(html)
+
     return html.retry
 
 def task_to(request, id):
@@ -147,6 +151,7 @@ def proxy_to(request, path):
         #print 'ok'
         return html_to_json(html)
     else:
+        job = default_queue.enqueue(proxy_task, html.id)
         return {'status':'202'}
 
 class NewsListView(ListView):
@@ -160,6 +165,16 @@ def NewsSubject(request, id):
         return render_to_response('news_subject.html', {'entry':obj})
     except:
         return HttpResponse('No find!')
+
+def like_models(request, path):
+    # Use escape in javascript
+    url = request.GET.get('url')
+    try:
+        html = HtmlContent.objects.get(url=url)
+    except:
+        return HttpResponse("No find!")
+    object_list = sim_search(html.content)
+    return render_to_response('sim_list.html', {'object_list':object_list})
 
 def test_page(request):
     return render_to_response('test.html')
