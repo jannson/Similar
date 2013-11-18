@@ -20,6 +20,7 @@ from cppjiebapy import Tokenize
 
 import gensim
 from gensim import models, corpora, similarities
+import Pyro4
 from simserver import SessionServer
 
 from pull.models import *
@@ -29,6 +30,8 @@ from pull.models import *
 #print sys.getdefaultencoding()
 
 copus_path = '/opt/projects/packages/sougou_corpus'
+HERE = os.path.dirname(os.path.abspath(__file__))
+
 def iter_files():
     cls_file = os.path.join(copus_path, 'ClassList.txt')
     cls = {}
@@ -67,13 +70,13 @@ def make_corpus():
     corpus = MyCorpus()
     tfidf_model = TfidfModel(corpus)
     #corpora.MmCorpus.serialize('wiki_en_corpus.mm', corpus) # store to disk, for later use
-    corpus.dictionary.save('./sogou.dict') # store the dictionary, for future reference
-    tfidf_model.save('./sogou.model')
+    corpus.dictionary.save(os.path.join(HERE, 'sogou.dict')) # store the dictionary, for future reference
+    tfidf_model.save(os.path.join(HERE, 'sogou.model'))
 
 CURR_PATH = os.path.dirname(os.path.abspath(__file__))
 def load_corpus():
-    dictionary = corpora.Dictionary.load(os.path.join(CURR_PATH,'sogou.dict'))
-    tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(CURR_PATH,'./sogou.model'))
+    dictionary = corpora.Dictionary.load(os.path.join(HERE,'sogou.dict'))
+    tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(HERE, 'sogou.model'))
     return dictionary, tfidf_model
 
 #make_corpus()
@@ -183,7 +186,8 @@ def summarize3(txt):
     mean_scored_summary=[sentences[idx] for (idx, score) in mean_scored]
     return u'。 '.join(mean_scored_summary) + u'。 '
 
-server = SessionServer('/tmp/server')
+#server = SessionServer('/tmp/server')
+server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def sim_search(content):
     doc = {}
     doc['tokens'] = [s for s in Tokenize(content)]
