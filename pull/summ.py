@@ -28,7 +28,7 @@ from pull.models import *
 
 #print sys.getdefaultencoding()
 
-copus_path = '/home/gan/download/sogou_copus'
+copus_path = '/opt/projects/packages/sougou_corpus'
 def iter_files():
     cls_file = os.path.join(copus_path, 'ClassList.txt')
     cls = {}
@@ -56,7 +56,7 @@ def iter_documents():
 class MyCorpus(object):
     def __init__(self):
         self.dictionary = gensim.corpora.Dictionary(iter_documents())
-        self.dictionary.filter_extremes(no_below=1, keep_n=10000) # check API docs for pruning params
+        self.dictionary.filter_extremes(no_below=1, keep_n=20000) # check API docs for pruning params
         #self.dictionary.save_as_text('sogou_dic.txt')
 
     def __iter__(self):
@@ -70,9 +70,10 @@ def make_corpus():
     corpus.dictionary.save('./sogou.dict') # store the dictionary, for future reference
     tfidf_model.save('./sogou.model')
 
+CURR_PATH = os.path.dirname(os.path.abspath(__file__))
 def load_corpus():
-    dictionary = corpora.Dictionary.load('./sogou.dict')
-    tfidf_model = tfidfmodel.TfidfModel.load('./sogou.model')
+    dictionary = corpora.Dictionary.load(os.path.join(CURR_PATH,'sogou.dict'))
+    tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(CURR_PATH,'./sogou.model'))
     return dictionary, tfidf_model
 
 #make_corpus()

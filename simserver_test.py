@@ -35,9 +35,9 @@ def iter_documents():
         yield doc
 
 server = SessionServer('/tmp/server')
-#training_corpus = iter_documents()
-#server.train(training_corpus, method='lsi')
-#print 'train finished'
+training_corpus = iter_documents()
+server.train(training_corpus, method='lsi')
+print 'train finished'
 #server.index(training_corpus)
 #print 'index finished'
 #server.commit()
