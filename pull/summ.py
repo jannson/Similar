@@ -193,7 +193,7 @@ def sim_search(content):
     doc['tokens'] = [s for s in Tokenize(content)]
     model_pks = []
     scores = []
-    for result in server.find_similar(doc)[:40]:
+    for result in server.find_similar(doc):
         id = int(result[0].split('_')[1])
         model_pks.append(id)
         scores.append(result[1])

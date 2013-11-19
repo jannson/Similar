@@ -81,7 +81,7 @@ def proxy_task(id):
     html.save()
     if html.retry != 3:
         print 'begin sim_index'
-        #sim_index(html)
+        sim_index(html)
 
     return html.retry
 

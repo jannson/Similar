@@ -25,6 +25,7 @@ from django.db.models import Count
 from django.db.models import Q
 from pull.models import *
 from cppjiebapy import Tokenize
+from pull.summ import summarize
 
 def iter_documents():
     """Iterate over all documents, yielding a document (=list of utf8 tokens) at a time."""
@@ -35,12 +36,22 @@ def iter_documents():
         yield doc
 
 server = SessionServer('/tmp/server')
-training_corpus = iter_documents()
-server.train(training_corpus, method='lsi')
-print 'train finished'
-#server.index(training_corpus)
-#print 'index finished'
-#server.commit()
+def train_server():
+    training_corpus = iter_documents()
+    server.train(training_corpus, method='lsi')
+    print 'train finished'
+    #server.index(training_corpus)
+    #print 'index finished'
+    server.commit()
+
+def update_keywords():
+    for html in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
+        html.tags,html.summerize = summarize(html.content)
+        html.summerize = html.summerize[0:388]
+        html.save()
+
+update_keywords()
+#train_server()
 
 def search(content):
     doc = {}
