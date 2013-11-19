@@ -14,6 +14,7 @@ import codecs
 
 from cppjiebapy import Tokenize
 from simserver import SessionServer
+import Pyro4
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -35,13 +36,14 @@ def iter_documents():
         doc['tokens'] = [s for s in Tokenize(obj.title)]*3 + [s for s in Tokenize(obj.content)]
         yield doc
 
-server = SessionServer('/tmp/server')
+#server = SessionServer('/tmp/server')
+server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def train_server():
     training_corpus = iter_documents()
-    server.train(training_corpus, method='lsi')
-    print 'train finished'
-    #server.index(training_corpus)
-    #print 'index finished'
+    #server.train(training_corpus, method='lsi')
+    #print 'train finished'
+    server.index(list(training_corpus))
+    print 'index finished'
     server.commit()
 
 def update_keywords():
@@ -50,8 +52,8 @@ def update_keywords():
         html.summerize = html.summerize[0:388]
         html.save()
 
-update_keywords()
-#train_server()
+#update_keywords()
+train_server()
 
 def search(content):
     doc = {}
