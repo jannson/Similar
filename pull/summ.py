@@ -6,11 +6,12 @@ import unittest
 import os
 import os.path
 import tempfile
-
-import numpy as np
-import gensim
 import logging
 
+import numpy as np
+from sklearn.linear_model import SGDClassifier
+
+import gensim
 from gensim.corpora import mmcorpus, Dictionary
 from gensim.models import lsimodel, ldamodel, tfidfmodel, rpmodel, logentropy_model, TfidfModel, LsiModel
 from gensim import matutils,corpora
@@ -23,47 +24,63 @@ from gensim import models, corpora, similarities
 import Pyro4
 from simserver import SessionServer
 
-from pull.models import *
+#from pull.models import *
 
-#logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 #print sys.getdefaultencoding()
 
-copus_path = '/opt/projects/packages/sougou_corpus'
+#copus_path = '/opt/projects/packages/sougou_corpus'
+copus_path = '/home/gan/download/sogou_copus'
 HERE = os.path.dirname(os.path.abspath(__file__))
 
-def iter_files():
-    cls_file = os.path.join(copus_path, 'ClassList.txt')
-    cls = {}
-    with open(cls_file) as file:
-        content = file.read().decode('gb2312').encode('utf-8').decode('utf-8')
-        for l in content.split('\n'):
-            cs = l.split()
-            if len(cs) > 1:
-                cls[cs[0]] = cs[1]
-    copus_sample = os.path.join(copus_path, 'Sample')
-    for d in os.listdir(copus_sample):
-        d1 = os.path.join(copus_sample, d)
-        if os.path.isdir(d1):
-            for d3 in os.listdir(d1):
-                f = os.path.join(d1, d3)
-                if os.path.isfile(f):
-                    yield cls[d],f
 
-def iter_documents():
-    for c,f in iter_files():
-        with open(f) as file:
-            content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
-            yield [s for s in Tokenize(content)]
 
 class MyCorpus(object):
     def __init__(self):
-        self.dictionary = gensim.corpora.Dictionary(iter_documents())
+        self.cls_init = False
+        self.cls_y = []
+        self.cls_ids = {}
+        self.ids_cls = {}
+        self.cls = {}
+
+        cls_file = os.path.join(copus_path, 'ClassList.txt')
+        cls_i = 0
+        with open(cls_file) as file:
+            content = file.read().decode('gb2312').encode('utf-8').decode('utf-8')
+            for l in content.split('\n'):
+                cs = l.split()
+                if len(cs) > 1:
+                    self.cls[cs[0]] = cs[1]
+                    self.ids_cls[cls_i] = cs[1]
+                    self.cls_ids[cs[1]] = cls_i
+                    cls_i += 1
+
+        self.dictionary = gensim.corpora.Dictionary(self.iter_documents())
         self.dictionary.filter_extremes(no_below=1, keep_n=20000) # check API docs for pruning params
         #self.dictionary.save_as_text('sogou_dic.txt')
 
+    def iter_files(self):
+        copus_sample = os.path.join(copus_path, 'Sample')
+        for d in os.listdir(copus_sample):
+            d1 = os.path.join(copus_sample, d)
+            if os.path.isdir(d1):
+                for d3 in os.listdir(d1):
+                    f = os.path.join(d1, d3)
+                    if os.path.isfile(f):
+                        if not self.cls_init:
+                            self.cls_y.append(self.cls_ids[self.cls[d]])
+                        yield self.cls[d],f
+        self.cls_init = True
+
+    def iter_documents(self):
+        for c,f in self.iter_files():
+            with open(f) as file:
+                content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
+                yield [s for s in Tokenize(content)]
+
     def __iter__(self):
-        for tokens in iter_documents():
+        for tokens in self.iter_documents():
             yield self.dictionary.doc2bow(tokens)
 
 def make_corpus():
@@ -73,13 +90,33 @@ def make_corpus():
     corpus.dictionary.save(os.path.join(HERE, 'sogou.dict')) # store the dictionary, for future reference
     tfidf_model.save(os.path.join(HERE, 'sogou.model'))
 
-CURR_PATH = os.path.dirname(os.path.abspath(__file__))
 def load_corpus():
     dictionary = corpora.Dictionary.load(os.path.join(HERE,'sogou.dict'))
     tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(HERE, 'sogou.model'))
     return dictionary, tfidf_model
 
+def do_classify():
+    corpus = MyCorpus()
+    tfidf_model = TfidfModel(corpus)
+    corpus_idf = tfidf_model[corpus]
+    num_terms = len(corpus.dictionary)
+    corpus_sparse = matutils.corpus2csc(corpus_idf, num_terms).transpose(copy=False)
+    #print corpus_sparse.shape
+    #corpus_dense = matutils.corpus2dense(corpus_idf, len(corpus.dictionary))
+    #print corpus_dense.shape
+    clf = SGDClassifier()
+    y = np.array(corpus.cls_y)
+    #print y.shape
+    clf.fit(corpus_sparse, y)
+
+    with open(os.path.join(copus_path, 'Sample/C000007/10.txt')) as file:
+        content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
+        test_corpus = tfidf_model[corpus.dictionary.doc2bow([s for s in Tokenize(content[300:1000])])]
+        test_sparse = matutils.corpus2csc([test_corpus], num_terms).transpose(copy=False)
+        print corpus.ids_cls[clf.predict(test_sparse)[0]], corpus.cls['C000007']
+
 #make_corpus()
+do_classify()
 dictionary,tfidf_model = load_corpus()
 def key_words(content, topk=18):
     vec_bow = dictionary.doc2bow([s for s in Tokenize(content)])
@@ -187,7 +224,7 @@ def summarize3(txt):
     return u'。 '.join(mean_scored_summary) + u'。 '
 
 #server = SessionServer('/tmp/server')
-server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def sim_search(content):
     doc = {}
     doc['tokens'] = [s for s in Tokenize(content)]

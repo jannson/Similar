@@ -4,6 +4,9 @@ from sklearn.feature_extraction import DictVectorizer
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.linear_model import SGDClassifier
+from cppjiebapy import Tokenize
 
 measurements = [
         {'city':'Dubai', 'temperature':33.},
@@ -45,3 +48,49 @@ vectorizer = TfidfVectorizer(min_df=1)
 X = vectorizer.fit_transform(corpus)
 print X
 print '\n'
+
+tags = [
+  "python, tools",
+  "linux, tools, ubuntu",
+  "distributed systems, linux, networking, tools",
+]
+
+print list(Tokenize(tags[-1]))
+
+vec = CountVectorizer(tokenizer=Tokenize)
+data = vec.fit_transform(tags)
+print data
+
+vocab = vec.get_feature_names()
+print vocab
+
+print "#####HASHING TESTING#########"
+vec = HashingVectorizer(tokenizer=Tokenize)
+data = vec.fit_transform(tags)
+print data
+print "###END HASHING###"
+
+train_set = ["The sky is blue.", "The sun is bright."] #Documents
+test_set = ["The sun in the sky is bright."] #Query
+
+vectorizer = CountVectorizer(tokenizer=Tokenize)
+transformer = TfidfTransformer()
+
+trainVectorizerArray = vectorizer.fit_transform(train_set).toarray()
+testVectorizerArray = vectorizer.transform(test_set).toarray()
+print 'Fit Vectorizer to train set\n', trainVectorizerArray
+print 'Transform Vectorizer to test set\n', testVectorizerArray
+
+transformer.fit(trainVectorizerArray)
+print transformer.transform(trainVectorizerArray).toarray()
+
+transformer.fit(testVectorizerArray)
+
+tfidf = transformer.transform(testVectorizerArray)
+print tfidf.todense()
+
+X = [[0., 0.], [1., 1.]]
+y = [0, 1]
+clf = SGDClassifier(loss="hinge", penalty="l2")
+clf.fit(X, y)
+print clf.predict([[2.,2.]])
