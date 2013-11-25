@@ -14,6 +14,7 @@ def hashdistance(str1, str2):
 
     #distance = 1 - hash1.similarity(hash2)
     #return hash1.similarity(hash2)
+    print hash1, hash2
     print hash1.hamming_distance(hash2)
     print corpus.distance(hash1,hash2)
     corpus.insert(hash1)
