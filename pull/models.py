@@ -19,3 +19,13 @@ class HtmlContent(models.Model):
 
     def get_title(self):
         return re.split(r'[-_|]', self.title)[0]
+
+class ScrapyContent(models.Model):
+    title = models.CharField(max_length=200)
+    url = models.URLField(max_length=250, unique=True)
+    hash = models.BigIntegerField()
+    content = models.TextField()
+    preview = models.TextField()
+
+    def get_title(self):
+        return re.split(r'[-_|]', self.title)[0]
