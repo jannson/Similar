@@ -24,9 +24,9 @@ from gensim import models, corpora, similarities
 import Pyro4
 from simserver import SessionServer
 
-#from pull.models import *
+from pull.models import *
 
-logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
+#logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 #print sys.getdefaultencoding()
 
@@ -104,7 +104,7 @@ def do_classify():
     #print corpus_sparse.shape
     #corpus_dense = matutils.corpus2dense(corpus_idf, len(corpus.dictionary))
     #print corpus_dense.shape
-    clf = SGDClassifier()
+    clf = SGDClassifier(loss='modified_huber')
     y = np.array(corpus.cls_y)
     #print y.shape
     clf.fit(corpus_sparse, y)
@@ -113,10 +113,11 @@ def do_classify():
         content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
         test_corpus = tfidf_model[corpus.dictionary.doc2bow([s for s in Tokenize(content[300:1000])])]
         test_sparse = matutils.corpus2csc([test_corpus], num_terms).transpose(copy=False)
-        print corpus.ids_cls[clf.predict(test_sparse)[0]], corpus.cls['C000007']
+        #print corpus.ids_cls[clf.predict(test_sparse)[0]], corpus.cls['C000007']
+        print clf.predict_proba(test_sparse)
 
 #make_corpus()
-do_classify()
+#do_classify()
 dictionary,tfidf_model = load_corpus()
 def key_words(content, topk=18):
     vec_bow = dictionary.doc2bow([s for s in Tokenize(content)])

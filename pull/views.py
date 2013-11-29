@@ -11,35 +11,52 @@ from django.db import connection
 #import simplejson as json
 import json
 import urllib2
+import redis
 import django_rq
 from rq.job import Job
+from hashes.simhash import simhash as simhashpy
+from cppjiebapy import Tokenize
 
 from django.db.models import Q
 
-from settings import *
+#from settings import *
+from django.conf import settings
 from pull.models import *
 from extract import TextExtract, TextToHtml, ContentEncodingProcessor, USER_AGENT
 from summ import summarize, sim_index, sim_search
 
-if not sae_debug:
-    import sae.mail
-    from sae.taskqueue import add_task
-    from sae.storage import Bucket
+# Default values.
+REDIS_URL = None
+REDIS_HOST = 'localhost'
+REDIS_PORT = 6379
+REDIS_KEY = 'groud_crawler:start_urls'
+def get_redis_server():
+    #url = settings.get('REDIS_URL',  REDIS_URL)
+    #host = settings.get('REDIS_HOST', REDIS_HOST)
+    #port = settings.get('REDIS_PORT', REDIS_PORT)
+    url = REDIS_URL
+    host = REDIS_HOST
+    port = REDIS_PORT
+
+    # REDIS_URL takes precedence over host/port specification.
+    if url:
+        return redis.from_url(url)
+    else:
+        return redis.Redis(host=host, port=port)
+
+redis_server = get_redis_server()
+def redis_queue(url):
+    redis_server.rpush(REDIS_KEY, url)
 
 default_queue = django_rq.get_queue('default')
-
 html_remove = re.compile(r'\s*<.*?>\s*',re.I|re.U|re.S)
-re_head = re.compile(r'<[head^>]*>.*</head>', re.I|re.U|re.S)
-re_keywords = re.compile(r'<meta\s+name=[\'"]keywords[\'"]\s+content\s*=\s*[\'"]([^\'"]+)[\'"][^>]*>', re.I|re.U|re.S)
-re_desc = re.compile(r'<meta\s+name=[\'"]description[\'"]\s+content\s*=\s*[\'"]([^\'"]+)[\'"][^>]*>', re.I|re.U|re.S)
-#USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_3) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.54 Safari/536.5'
 
 def proxy_task(id):
     try:
         html = HtmlContent.objects.get(pk=id)
         #print 'html content', html.content
-        if html.retry != 3 and html.content != '':
-            return HttpResponse('ok')
+        if html.status <= 1 and html.content != '':
+            return html.status
     except:
         # Not find
         return HttpResponse('not find')
@@ -55,7 +72,7 @@ def proxy_task(id):
         content = proxied_request.read()
         #print 'requested'
     except urllib2.HTTPError as e:
-        html.retry = 3
+        html.status = 3
         print 'urllib2 error'
     else:
         try:
@@ -69,8 +86,10 @@ def proxy_task(id):
         html.content = tx.content.strip()
         if tx.content == '':
             print 'Parse html error'
-            html.retry = 3
+            html.status = 4
         else:
+            html.status = 0
+            html.hash = long(simhashpy(list(Tokenize(html.content))))
             html.tags,html.summerize = summarize(html.content)
             if len(html_remove.sub('', tx.preview)) < 250:
                 html.preview = TextToHtml(tx.content)
@@ -79,15 +98,15 @@ def proxy_task(id):
 
     #print html.id, html.title, html.tags, html.summerize
     html.save()
-    if html.retry != 3:
+    if html.status == 0:
         print 'begin sim_index'
-        sim_index(html)
+        #sim_index(html)
 
-    return html.retry
+    return html.status
 
 def task_to(request, id):
-    retry = proxy_task(id)
-    if retry == 3:
+    status = proxy_task(id)
+    if status > 2:
         return HttpResponse('error')
     return HttpResponse('ok')
 
@@ -130,19 +149,22 @@ def html_to_json(html):
 def proxy_to(request, path):
     # Use escape in javascript
     url = request.GET.get('url')
+    if not url or not url.startswith('http'):
+        return {'status':'500'}
     try:
         html = HtmlContent.objects.get(url=url)
     except:
-        html = HtmlContent(url=url, retry=0)
+        html = HtmlContent(url=url, status=2, hash=hash(url))
         html.save()
 
-        job = default_queue.enqueue(proxy_task, html.id)
+        #job = default_queue.enqueue(proxy_task, html.id)
         #add_task('default', '%s/task/%d' % (BASE_URL, html.id))
+        redis_queue(url)
 
         # wait for processing
         #print 'wait for processing'
         return {'status':'202'}
-    if html.retry == 3:
+    if html.status > 2:
         #print 'processed but error in processing'
         # processed but error in processing
         return {'status':'500'}
@@ -151,11 +173,12 @@ def proxy_to(request, path):
         #print 'ok'
         return html_to_json(html)
     else:
-        job = default_queue.enqueue(proxy_task, html.id)
+        #job = default_queue.enqueue(proxy_task, html.id)
+        redis_queue(url)
         return {'status':'202'}
 
 class NewsListView(ListView):
-    queryset = HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')).order_by('-id')
+    queryset = HtmlContent.objects.filter(status=0).filter(~Q(content='')).order_by('-id')
     paginate_by = 25
     template_name = 'news_list.html'
 
