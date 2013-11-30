@@ -44,3 +44,4 @@ zzz*
 *.lsi
 *.npy
 Session.vim
+log_*

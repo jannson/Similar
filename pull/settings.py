@@ -29,9 +29,9 @@ sae_debug = not APP_NAME
 if sae_debug:
     db_name = "pull"
     db_user = "pull"
-    db_pass = "pull"
-    #db_host = "yaha.v-find.com"
-    db_host = "192.168.57.47"
+    db_pass = "pull123"
+    db_host = "yaha.v-find.com"
+    #db_host = "192.168.57.47"
     db_host_s = db_host
     db_port = "3306"
 else:

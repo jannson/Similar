@@ -30,8 +30,8 @@ from pull.models import *
 
 #print sys.getdefaultencoding()
 
-#copus_path = '/opt/projects/packages/sougou_corpus'
-copus_path = '/home/gan/download/sogou_copus'
+copus_path = '/opt/projects/packages/sougou_corpus'
+#copus_path = '/home/gan/download/sogou_copus'
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 

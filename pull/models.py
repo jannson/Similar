@@ -3,6 +3,24 @@
 import re
 from django.db import models
 from django.contrib.auth.models import User
+from django.utils.translation import ugettext_lazy as _
+
+class PositiveBigIntegerField(models.BigIntegerField):
+    empty_strings_allowed = False
+    description = _("Big (8 byte) positive integer")
+
+    def db_type(self, connection):
+        """
+        Returns MySQL-specific column data type. Make additional checks
+        to support other backends.
+        """
+        return 'bigint UNSIGNED'
+
+    def formfield(self, **kwargs):
+        defaults = {'min_value': 0,
+                    'max_value': BigIntegerField.MAX_BIGINT * 2 - 1}
+        defaults.update(kwargs)
+        return super(PositiveBigIntegerField, self).formfield(**defaults)
 
 class Category(models.Model):
     name=models.CharField(max_length=50, unique=True)
@@ -11,7 +29,8 @@ class Category(models.Model):
 class HtmlContent(models.Model):
     title = models.CharField(max_length=200)
     url = models.URLField(max_length=250, unique=True)
-    hash = models.BigIntegerField(unique=True)
+    #hash = models.BigIntegerField(unique=True)
+    hash = PositiveBigIntegerField(unique=True)
     tags = models.CharField(max_length=200)
     category = models.ManyToManyField(Category, blank=True)
     summerize = models.CharField(max_length=400)

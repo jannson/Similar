@@ -1,0 +1,12 @@
+#!/bin/sh
+
+rm -f log_*
+
+#nohup ./manager.py runserver 0.0.0.0:8080 >log_manager 2>&1 &
+#sleep 5
+
+#nohup python -m simserver.run_simserver /tmp/server>log_simserver 2>&1 &
+
+/opt/projects/git_source/scrapy-board/scrapy_board/scrapy_board/process_items.py
+
+
