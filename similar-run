@@ -7,6 +7,6 @@ rm -f log_*
 
 #nohup python -m simserver.run_simserver /tmp/server>log_simserver 2>&1 &
 
-/opt/projects/git_source/scrapy-board/scrapy_board/scrapy_board/process_items.py
+#/opt/projects/git_source/scrapy-board/scrapy_board/scrapy_board/process_items.py
 
 
