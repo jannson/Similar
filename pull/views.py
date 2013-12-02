@@ -154,7 +154,7 @@ def proxy_to(request, path):
     try:
         html = HtmlContent.objects.get(url=url)
     except:
-        html = HtmlContent(url=url, status=2, hash=hash(url))
+        html = HtmlContent(url=url, status=2, hash=(hash(url) & 0xFFFFFFFF))
         html.save()
 
         #job = default_queue.enqueue(proxy_task, html.id)

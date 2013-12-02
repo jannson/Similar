@@ -67,12 +67,12 @@ def hash_all():
             c.insert(h)
         except:
             pass
-hash_all()
+#hash_all()
 
 #print find_duplicate(c,2380402939662658583)
 #obj1 = HtmlContent.objects.get(hash=3262982581)
 #h1 = simhash.hash_token(list(Tokenize(obj1.content)))
-#print c.find_all(h1)
+print c.find_all(5002828471831700029)
 #h1 = simhashpy(list(Tokenize(obj1.content)))
 #h2 = 11128035827389547469
 #obj2 = HtmlContent.objects.get(hash=11128035827389547469)

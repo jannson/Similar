@@ -225,7 +225,7 @@ def summarize3(txt):
     return u'。 '.join(mean_scored_summary) + u'。 '
 
 #server = SessionServer('/tmp/server')
-#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def sim_search(content):
     doc = {}
     doc['tokens'] = [s for s in Tokenize(content)]
