@@ -25,12 +25,12 @@ class PositiveBigIntegerField(models.BigIntegerField):
 class Category(models.Model):
     name=models.CharField(max_length=50, unique=True)
 
-#status: 0:ok,1:dup,2:req,3:url_error,4:parse_error
+#status: 0:ok,1:dup,2:req,3:url_error,4:parse_error,5:exists_url
 class HtmlContent(models.Model):
     title = models.CharField(max_length=200)
     url = models.URLField(max_length=250, unique=True)
     #hash = models.BigIntegerField(unique=True)
-    hash = PositiveBigIntegerField(unique=True)
+    hash = PositiveBigIntegerField()
     tags = models.CharField(max_length=200)
     category = models.ManyToManyField(Category, blank=True)
     summerize = models.CharField(max_length=400)

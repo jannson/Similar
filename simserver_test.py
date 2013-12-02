@@ -30,7 +30,7 @@ from pull.summ import summarize
 
 def iter_documents():
     """Iterate over all documents, yielding a document (=list of utf8 tokens) at a time."""
-    for obj in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
+    for obj in HtmlContent.objects.filter(status=0).filter(~Q(content='')):
         doc = {}
         doc['id'] = 'html_%d' % obj.id
         doc['tokens'] = [s for s in Tokenize(obj.title)]*3 + [s for s in Tokenize(obj.content)]
@@ -40,11 +40,11 @@ def iter_documents():
 server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def train_server():
     training_corpus = iter_documents()
-    #server.train(training_corpus, method='lsi')
+    #server.train(list(training_corpus), method='lsi')
     #print 'train finished'
     server.index(list(training_corpus))
     print 'index finished'
-    server.commit()
+    #server.commit()
 
 def update_keywords():
     for html in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
@@ -52,8 +52,20 @@ def update_keywords():
         html.summerize = html.summerize[0:388]
         html.save()
 
+def reset_ids():
+    ids = []
+    for obj in HtmlContent.objects.filter(status=0).filter(~Q(content='')):
+        ids.append(obj.id)
+    ids_set = frozenset(ids)
+    ids_del = []
+    for id in range(3000):
+        if id not in ids_set:
+            ids_del.append('html_%d' % id)
+    server.delete(ids_del)
+
 #update_keywords()
-train_server()
+#train_server()
+reset_ids()
 
 def search(content):
     doc = {}

@@ -48,8 +48,8 @@ redis_server = get_redis_server()
 def redis_queue(url):
     redis_server.rpush(REDIS_KEY, url)
 
-default_queue = django_rq.get_queue('default')
-html_remove = re.compile(r'\s*<.*?>\s*',re.I|re.U|re.S)
+#default_queue = django_rq.get_queue('default')
+#html_remove = re.compile(r'\s*<.*?>\s*',re.I|re.U|re.S)
 
 def proxy_task(id):
     try:
@@ -149,12 +149,13 @@ def html_to_json(html):
 def proxy_to(request, path):
     # Use escape in javascript
     url = request.GET.get('url')
-    if not url or not url.startswith('http'):
+    if not url or not url.lower().startswith('http'):
         return {'status':'500'}
+    url = url.lower()
     try:
         html = HtmlContent.objects.get(url=url)
     except:
-        html = HtmlContent(url=url, status=2, hash=(hash(url) & 0xFFFFFFFF))
+        html = HtmlContent(url=url, status=2, hash=0)
         html.save()
 
         #job = default_queue.enqueue(proxy_task, html.id)
