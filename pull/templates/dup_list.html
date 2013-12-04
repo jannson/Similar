@@ -1,0 +1,28 @@
+<html><head><title>好文章</title>
+<meta name="description" content="资讯,好文章，获取正文"/>
+  <link rel="shortcut icon" href="/favicon.ico" />
+        <meta charset="utf-8"/>
+        <style>
+			img{border:0px currentcolor}:focus{outline:0px}h1{font-size:100%;font-weight:normal}h3{font-size:100%;font-weight:normal}a{text-decoration:none}body{font-family:微软雅黑;font-size:14px;background-image:url(http://1-ps.googleusercontent.com/h/download.wohuia.com/images/xbg_bd.png.pagespeed.ic.7i8eUJulab.png);background-color:#fff;color:#333;line-height:1.5;background-position:initial initial;background-repeat:initial initial}
+			.sim{font-size:12px;font-style:italic;color:#888FFF;}
+        </style>
+    </head>
+    <body>
+        <div style="word-wrap: break-word; word-break: break-all; font-size: 20px; width: 960px; padding:20px;">
+{% load endless %}
+{% paginate object_list %}
+	{% for obj_dup in object_list %}
+        <p>
+		{% for obj in obj_dup.get_dup %}
+		<a href="/new/{{ obj.id }}/" alt='{{obj.get_title}}' target='blank'>{{obj.get_title}}</a>
+		<a class='sim' href='/like/?url={{obj.url|urlencode}}' target='_blank'>相似文章</a><br/>
+		{% endfor %}
+        </p>  
+		<p>
+			{{ obj_dup.summerize|safe }}
+		</p>
+    {% endfor %}
+{% show_pages %}
+        </div>
+    </body>
+</html>

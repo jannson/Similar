@@ -20,5 +20,6 @@ urlpatterns = patterns('',
     url(r'^p/(?P<path>.*)$', proxy_to),
     #url(r'^task/(?P<id>\d+)$', task_to),
     url(r'^like/(?P<path>.*)$', like_models),
+    url(r'^dup$', DupListView.as_view()),
     url(r'^test$', test_page),
 )

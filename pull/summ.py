@@ -22,7 +22,7 @@ from cppjiebapy import Tokenize
 import gensim
 from gensim import models, corpora, similarities
 import Pyro4
-from simserver import SessionServer
+import zerorpc
 
 from pull.models import *
 
@@ -248,6 +248,7 @@ def sim_search(html):
         for k,v in enumerate(model_pks):
             objs.append((bulk_objs[v],scores[k]))
         return objs
+        #return list(HtmlContent.objects.filter(pk__in=model_pks))
     else:
         return None
 

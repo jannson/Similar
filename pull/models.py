@@ -4,6 +4,7 @@ import re
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.translation import ugettext_lazy as _
+import zerorpc
 
 class PositiveBigIntegerField(models.BigIntegerField):
     empty_strings_allowed = False
@@ -40,3 +41,12 @@ class HtmlContent(models.Model):
 
     def get_title(self):
         return re.split(r'[-_|]', self.title)[0]
+    def get_dup(self):
+        return find_duplicate(self.hash)
+
+def find_duplicate(hash):
+    #TODO for zerorpc
+    hashm = zerorpc.Client('tcp://localhost:5678')
+    sims = hashm.find_all(hash)[0][1]
+    sims = list(set(sims))
+    return HtmlContent.objects.filter(hash__in=sims)

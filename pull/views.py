@@ -202,3 +202,8 @@ def like_models(request, path):
 
 def test_page(request):
     return render_to_response('test.html')
+
+class DupListView(ListView):
+    queryset = HtmlContent.objects.filter(status=1).filter(~Q(content='')).order_by('-id')
+    paginate_by = 25
+    template_name = 'dup_list.html'
