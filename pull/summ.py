@@ -226,20 +226,30 @@ def summarize3(txt):
 
 #server = SessionServer('/tmp/server')
 server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
-def sim_search(content):
-    doc = {}
-    doc['tokens'] = [s for s in Tokenize(content)]
+def sim_search(html):
     model_pks = []
     scores = []
-    for result in server.find_similar(doc):
-        id = int(result[0].split('_')[1])
-        model_pks.append(id)
-        scores.append(result[1])
-    objs = []
-    bulk_objs = HtmlContent.objects.in_bulk(model_pks)
-    for k,v in enumerate(model_pks):
-        objs.append((bulk_objs[v],scores[k]))
-    return objs
+    results = None
+    try:
+        results = server.find_similar('html_%d' % html.id)
+        #print 'get from id',html.id
+    except:
+        doc = {}
+        doc['tokens'] = [s for s in Tokenize(html.content)]
+        results = server.find_similar(doc)
+        #print 'get from content'
+    if results:
+        for result in results:
+            id = int(result[0].split('_')[1])
+            model_pks.append(id)
+            scores.append(result[1])
+        objs = []
+        bulk_objs = HtmlContent.objects.in_bulk(model_pks)
+        for k,v in enumerate(model_pks):
+            objs.append((bulk_objs[v],scores[k]))
+        return objs
+    else:
+        return None
 
 def sim_index(obj):
     doc = {}

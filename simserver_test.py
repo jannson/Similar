@@ -83,10 +83,26 @@ def search(content):
 
     return objs
 
-content = u'市国税局推出推进出口货物跨部门合作机制'
-for v,score in search(content):
-    print "%s(%f) / " % (v.title.split('|')[0],score),
+def search2(doc):
+    model_pks = []
+    scores = []
+    for result in server.find_similar(doc):
+        id = int(result[0].split('_')[1])
+        model_pks.append(id)
+        scores.append(result[1])
+    objs = []
+    bulk_objs = HtmlContent.objects.in_bulk(model_pks)
+    for k,v in enumerate(model_pks):
+        objs.append((bulk_objs[v],scores[k]))
 
+    return objs
+
+#content = u'市国税局推出推进出口货物跨部门合作机制'
+for v,score in search2('html_4706'):
+    print "%s(%f) / " % (v.title.split('|')[0],score),
+#obj = HtmlContent.objects.get(pk=4706)
+#for v,score in search(obj.content):
+#    print "%s(%f) / " % (v.title.split('|')[0],score),
 '''class SearchQuerySet(object):
     def __init__(self, content):
     def __len__(self):

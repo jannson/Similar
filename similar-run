@@ -1,13 +1,13 @@
 #!/bin/sh
 
-rm -f log_*
+#rm -f log_*
 
-nohup ./manage.py runserver 0.0.0.0:8080 >log_manager 2>&1 &
-sleep 5
+#nohup ./manage.py runserver 0.0.0.0:8080 >log_manager 2>&1 &
+#sleep 5
 
-nohup python -m simserver.run_simserver /tmp/server>log_simserver 2>&1 &
+#nohup python -m simserver.run_simserver /tmp/server>log_simserver 2>&1 &
 
-nohup /opt/projects/git_source/scrapy-board/scrapy_board/scrapy_board/process_items.py >log_proc 2>&1 &
+nohup python /opt/projects/git_source/scrapy-board/scrapy_board/scrapy_board/process_items.py >log_proc 2>&1 &
 
 
 

@@ -175,7 +175,7 @@ def proxy_to(request, path):
         return html_to_json(html)
     else:
         #job = default_queue.enqueue(proxy_task, html.id)
-        redis_queue(url)
+        #redis_queue(url)
         return {'status':'202'}
 
 class NewsListView(ListView):
@@ -197,7 +197,7 @@ def like_models(request, path):
         html = HtmlContent.objects.get(url=url)
     except:
         return HttpResponse("No find!")
-    object_list = sim_search(html.content)
+    object_list = sim_search(html)
     return render_to_response('sim_list.html', {'object_list':object_list})
 
 def test_page(request):
