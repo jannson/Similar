@@ -232,7 +232,7 @@ def sim_search(html):
     results = None
     try:
         results = server.find_similar('html_%d' % html.id)
-        #print 'get from id',html.id
+        #print 'get from id',html.id,results
     except:
         doc = {}
         doc['tokens'] = [s for s in Tokenize(html.content)]

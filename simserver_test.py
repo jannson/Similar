@@ -33,18 +33,23 @@ def iter_documents():
     for obj in HtmlContent.objects.filter(status=0).filter(~Q(content='')):
         doc = {}
         doc['id'] = 'html_%d' % obj.id
-        doc['tokens'] = [s for s in Tokenize(obj.title)]*3 + [s for s in Tokenize(obj.content)]
+        #doc['tokens'] = [s for s in Tokenize(obj.content)]
+        doc['tokens'] = list(Tokenize(obj.content))
+        if obj.id % 1000 == 0:
+            print 'processing', obj.id
         yield doc
 
-#server = SessionServer('/tmp/server')
-server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+server = SessionServer('/tmp/server')
+#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def train_server():
     training_corpus = iter_documents()
     #server.train(list(training_corpus), method='lsi')
     #print 'train finished'
-    server.index(list(training_corpus))
+    #server.index()
+    server.index(training_corpus)
     print 'index finished'
-    #server.commit()
+    server.optimize()
+    print 'optimize finished'
 
 def update_keywords():
     for html in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
@@ -64,8 +69,8 @@ def reset_ids():
     server.delete(ids_del)
 
 #update_keywords()
-#train_server()
-reset_ids()
+train_server()
+#reset_ids()
 
 def search(content):
     doc = {}
@@ -97,8 +102,9 @@ def search2(doc):
 
     return objs
 
+#server.optimize()
 #content = u'市国税局推出推进出口货物跨部门合作机制'
-for v,score in search2('html_4706'):
+for v,score in search2('html_4744'):
     print "%s(%f) / " % (v.title.split('|')[0],score),
 #obj = HtmlContent.objects.get(pk=4706)
 #for v,score in search(obj.content):
