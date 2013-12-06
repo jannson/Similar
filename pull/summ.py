@@ -252,6 +252,33 @@ def sim_search(html):
     else:
         return None
 
+def sim_content(content):
+    model_pks = []
+    scores = []
+    doc = {}
+    '''
+    if not isinstance(content,unicode):
+        try:
+            content = content.decode('utf-8')
+        except:
+            content = content.decode('gbk','ignore').encode('utf-8', 'replace').decode('utf-8')
+    '''
+    doc['tokens'] = [s for s in Tokenize(content)]
+    #print doc
+    results = server.find_similar(doc)
+    if results:
+        for result in results:
+            id = int(result[0].split('_')[1])
+            model_pks.append(id)
+            scores.append(result[1])
+        objs = []
+        bulk_objs = HtmlContent.objects.in_bulk(model_pks)
+        for k,v in enumerate(model_pks):
+            objs.append((bulk_objs[v],scores[k]))
+        return objs
+    else:
+        return None
+
 def sim_index(obj):
     doc = {}
     doc['id'] = 'html_%d' % obj.id

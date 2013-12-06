@@ -8,6 +8,7 @@ from django.views.generic import ListView
 from django.db.models import Count
 from django.db.models import Q
 from django.db import connection
+from django.utils.http import urlquote_plus, urlquote
 #import simplejson as json
 import json
 import urllib2
@@ -23,7 +24,7 @@ from django.db.models import Q
 from django.conf import settings
 from pull.models import *
 from extract import TextExtract, TextToHtml, ContentEncodingProcessor, USER_AGENT
-from summ import summarize, sim_index, sim_search
+from summ import summarize, sim_search, sim_content, sim_index
 
 # Default values.
 REDIS_URL = None
@@ -199,6 +200,21 @@ def like_models(request, path):
         return HttpResponse("No find!")
     object_list = sim_search(html)
     return render_to_response('sim_list.html', {'object_list':object_list})
+
+def unescape(c):
+    #return "".join([(len(i)>0 and unichr(int(i,16)) or "") for i in c.split('%u')])
+    return c.replace('%','\\').decode('unicode-escape')
+
+def search_content(request, path):
+    # Use escape in javascript
+    content = request.GET.get('s')
+    if content and content.strip() != '':
+        content = unescape(content)
+        object_list = sim_content(content)
+    else:
+        object_list = None
+        content = ''
+    return render_to_response('search.html', {'content':content,'object_list':object_list})
 
 def test_page(request):
     return render_to_response('test.html')

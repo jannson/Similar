@@ -104,8 +104,8 @@ def search2(doc):
 
 #server.optimize()
 #content = u'市国税局推出推进出口货物跨部门合作机制'
-#for v,score in search2('html_4744'):
-#    print "%s(%f) / " % (v.title.split('|')[0],score),
+for v,score in search2('html_6769'):
+    print "%s(%f) / " % (v.title.split('|')[0],score),
 #obj = HtmlContent.objects.get(pk=4706)
 #for v,score in search(obj.content):
 #    print "%s(%f) / " % (v.title.split('|')[0],score),
