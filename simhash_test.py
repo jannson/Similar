@@ -42,6 +42,7 @@ from hashes.simhash import simhash as simhashpy
 #import dse
 #dse.patch_models(specific_models=[HtmlContent])
 from bulkops import update_many
+import Pyro4
 
 import zerorpc
 c = zerorpc.Client('tcp://localhost:5678')
@@ -53,50 +54,49 @@ def find_duplicate(hashm, hash):
 
 def hash_all():
     for obj in HtmlContent.objects.filter(status__lte=2).filter(~Q(content='')):
-        #h = long(simhashpy(list(Tokenize(obj.content)), 64))
-        h = simhash.hash_token(list(Tokenize(obj.content)))
-        obj.hash = h
+        h = simhash.hash_tokenpy(list(Tokenize(obj.content)))
         if find_duplicate(c, h) == 0:
             obj.status = 0
         else:
             obj.status = 1
-            #obj.hash = (hash(obj.url) & 0xFFFFFFFF)
-        #obj.save(force_update=True, update_fields=['hash', 'status'])
-        try:
-            obj.save()
-            c.insert(h)
-        except:
-            pass
+        obj.hash = h
+        obj.save()
+        c.insert(h)
 #hash_all()
 
-#print find_duplicate(c,2380402939662658583)
-#obj1 = HtmlContent.objects.get(hash=3262982581)
-#h1 = simhash.hash_token(list(Tokenize(obj1.content)))
-print c.find_all(10826786681081617926)
-#h1 = simhashpy(list(Tokenize(obj1.content)))
-#h2 = 11128035827389547469
-#obj2 = HtmlContent.objects.get(hash=11128035827389547469)
-#h2 = simhashpy(list(Tokenize(obj2.content)))
+def hash_test():
+    sim_server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+    dels = []
+    for obj in HtmlContent.objects.filter(status=1).filter(~Q(content='')):
+        dels.append('html_%d' % obj.id)
+    sim_server.delete(dels)
+hash_test()
 
-#print corpus.distance(h1,h2)
-#print h1.hamming_distance(h2)
-#print c.find_all(h1)
-#print find_duplicate(c,6)
-
-'''
-obj1 = HtmlContent.objects.get(hash=2633880672150661580)
-obj2 = HtmlContent.objects.get(hash=2642887871407499724)
-print obj1.url,obj2.url
+obj1 = HtmlContent.objects.get(pk=4815)
+obj2 = HtmlContent.objects.get(pk=4817)
 token1 = list(Tokenize(obj1.content))
 token2 = list(Tokenize(obj2.content))
 h1 = simhashpy(token1, 64)
 h2 = simhashpy(token2, 64)
 print h1,h2
-print h1.similarity(h2)
-print h1.hamming_distance(h2)
 print corpus.distance(h1,h2)
-
 h1 = simhash.hash_token(token1)
 h2 = simhash.hash_token(token2)
+print h1,h2
+print corpus.distance(h1,h2)
+h1 = simhash.hash_tokenpy(token1)
+h2 = simhash.hash_tokenpy(token2)
+print h1,h2
+print corpus.distance(h1,h2)
+
+'''
+str1 = 'test love you'
+str2 = 'love you test'
+t1 = str1.decode('utf-8').split()
+t2 = str2.decode('utf-8').split()
+h1 = simhash.hash_token(t1)
+h2 = simhash.hash_token(t2)
+h2 = simhash.hash_token(t1)
+print h1,h2
 print corpus.distance(h1,h2)
 '''

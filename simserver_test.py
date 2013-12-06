@@ -39,8 +39,8 @@ def iter_documents():
             print 'processing', obj.id
         yield doc
 
-server = SessionServer('/tmp/server')
-#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+#server = SessionServer('/tmp/server')
+server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def train_server():
     training_corpus = iter_documents()
     #server.train(list(training_corpus), method='lsi')
@@ -69,7 +69,7 @@ def reset_ids():
     server.delete(ids_del)
 
 #update_keywords()
-train_server()
+#train_server()
 #reset_ids()
 
 def search(content):
@@ -104,8 +104,8 @@ def search2(doc):
 
 #server.optimize()
 #content = u'市国税局推出推进出口货物跨部门合作机制'
-for v,score in search2('html_4744'):
-    print "%s(%f) / " % (v.title.split('|')[0],score),
+#for v,score in search2('html_4744'):
+#    print "%s(%f) / " % (v.title.split('|')[0],score),
 #obj = HtmlContent.objects.get(pk=4706)
 #for v,score in search(obj.content):
 #    print "%s(%f) / " % (v.title.split('|')[0],score),
