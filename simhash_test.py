@@ -70,10 +70,10 @@ def hash_test():
     for obj in HtmlContent.objects.filter(status=1).filter(~Q(content='')):
         dels.append('html_%d' % obj.id)
     sim_server.delete(dels)
-hash_test()
+#hash_test()
 
-obj1 = HtmlContent.objects.get(pk=4815)
-obj2 = HtmlContent.objects.get(pk=4817)
+obj1 = HtmlContent.objects.get(pk=6870)
+obj2 = HtmlContent.objects.get(pk=7024)
 token1 = list(Tokenize(obj1.content))
 token2 = list(Tokenize(obj2.content))
 h1 = simhashpy(token1, 64)

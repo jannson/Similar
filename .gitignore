@@ -45,3 +45,5 @@ zzz*
 *.npy
 Session.vim
 log_*
+*.pkl
+

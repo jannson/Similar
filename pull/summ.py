@@ -10,6 +10,7 @@ import logging
 
 import numpy as np
 from sklearn.linear_model import SGDClassifier
+from sklearn.externals import joblib
 
 import gensim
 from gensim.corpora import mmcorpus, Dictionary
@@ -34,7 +35,27 @@ copus_path = '/opt/projects/packages/sougou_corpus'
 #copus_path = '/home/gan/download/sogou_copus'
 HERE = os.path.dirname(os.path.abspath(__file__))
 
+def load_corpus():
+    dictionary = corpora.Dictionary.load(os.path.join(HERE,'sogou.dict'))
+    tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(HERE, 'sogou.model'))
+    sg_class = joblib.load(os.path.join(HERE, 'sgdc_clf2.pkl'))
+    return dictionary, tfidf_model, sg_class
 
+def load_class_ids():
+    cls_file = os.path.join(copus_path, 'ClassList.txt')
+    cls_i = 0
+    ids_cls = {}
+    with open(cls_file) as file:
+        content = file.read().decode('gb2312').encode('utf-8').decode('utf-8')
+        for l in content.split('\n'):
+            cs = l.split()
+            if len(cs) > 1:
+                ids_cls[cls_i] = cs[1]
+                cls_i += 1
+    return ids_cls
+
+dictionary,tfidf_model,sg_class = load_corpus()
+id2cls = load_class_ids()
 
 class MyCorpus(object):
     def __init__(self):
@@ -56,9 +77,10 @@ class MyCorpus(object):
                     self.cls_ids[cs[1]] = cls_i
                     cls_i += 1
 
-        self.dictionary = gensim.corpora.Dictionary(self.iter_documents())
-        self.dictionary.filter_extremes(no_below=1, keep_n=20000) # check API docs for pruning params
+        #self.dictionary = gensim.corpora.Dictionary(self.iter_documents())
+        #self.dictionary.filter_extremes(no_below=1, keep_n=20000) # check API docs for pruning params
         #self.dictionary.save_as_text('sogou_dic.txt')
+        self.dictionary = dictionary
 
     def iter_files(self):
         copus_sample = os.path.join(copus_path, 'Sample')
@@ -90,35 +112,47 @@ def make_corpus():
     corpus.dictionary.save(os.path.join(HERE, 'sogou.dict')) # store the dictionary, for future reference
     tfidf_model.save(os.path.join(HERE, 'sogou.model'))
 
-def load_corpus():
-    dictionary = corpora.Dictionary.load(os.path.join(HERE,'sogou.dict'))
-    tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(HERE, 'sogou.model'))
-    return dictionary, tfidf_model
-
-def do_classify():
-    corpus = MyCorpus()
-    tfidf_model = TfidfModel(corpus)
     corpus_idf = tfidf_model[corpus]
     num_terms = len(corpus.dictionary)
     corpus_sparse = matutils.corpus2csc(corpus_idf, num_terms).transpose(copy=False)
     #print corpus_sparse.shape
     #corpus_dense = matutils.corpus2dense(corpus_idf, len(corpus.dictionary))
     #print corpus_dense.shape
-    clf = SGDClassifier(loss='modified_huber')
+    #clf = SGDClassifier(loss='modified_huber')
+    clf = SGDClassifier(loss='hinge')
     y = np.array(corpus.cls_y)
     #print y.shape
     clf.fit(corpus_sparse, y)
+    filename = os.path.join(HERE, 'sgdc_clf.pkl')
+    _ = joblib.dump(clf, filename, compress=9)
 
-    with open(os.path.join(copus_path, 'Sample/C000007/10.txt')) as file:
-        content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
-        test_corpus = tfidf_model[corpus.dictionary.doc2bow([s for s in Tokenize(content[300:1000])])]
-        test_sparse = matutils.corpus2csc([test_corpus], num_terms).transpose(copy=False)
-        #print corpus.ids_cls[clf.predict(test_sparse)[0]], corpus.cls['C000007']
-        print clf.predict_proba(test_sparse)
+def do_classify():
+    corpus = MyCorpus()
+    #tfidf_model = TfidfModel(corpus)
+    corpus_idf = tfidf_model[corpus]
+    num_terms = len(corpus.dictionary)
+    corpus_sparse = matutils.corpus2csc(corpus_idf, num_terms).transpose(copy=False)
+    #print corpus_sparse.shape
+    #corpus_dense = matutils.corpus2dense(corpus_idf, len(corpus.dictionary))
+    #print corpus_dense.shape
+    clf = SGDClassifier(loss='hinge')
+    y = np.array(corpus.cls_y)
+    #print y.shape
+    clf.fit(corpus_sparse, y)
+    filename = os.path.join(HERE, 'sgdc_clf2.pkl')
+    _ = joblib.dump(clf, filename, compress=9)
+
+def classify_content(content):
+    num_terms = len(dictionary)
+    test_corpus = tfidf_model[dictionary.doc2bow(list(Tokenize(content)))]
+    test_sparse = matutils.corpus2csc([test_corpus], num_terms).transpose(copy=False)
+    result = sg_class.predict(test_sparse)
+    print result
+    return id2cls[result[0]]
+    #return zip(id2cls.values(),result)
 
 #make_corpus()
 #do_classify()
-dictionary,tfidf_model = load_corpus()
 def key_words(content, topk=18):
     vec_bow = dictionary.doc2bow([s for s in Tokenize(content)])
     tfidf_corpus = tfidf_model[vec_bow]
