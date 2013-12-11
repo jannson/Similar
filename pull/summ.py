@@ -9,12 +9,25 @@ import tempfile
 import logging
 
 import numpy as np
+from sklearn.decomposition import TruncatedSVD
 from sklearn.linear_model import SGDClassifier
+from sklearn.svm import LinearSVC
+from sklearn.neighbors import KNeighborsClassifier
+from sklearn.naive_bayes import BernoulliNB, MultinomialNB
+from sklearn.pipeline import Pipeline
+from sklearn.feature_extraction.text import CountVectorizer
+from sklearn.feature_extraction.text import TfidfTransformer
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.feature_extraction.text import HashingVectorizer
+from sklearn.feature_selection import SelectKBest, chi2
+from sklearn.preprocessing import Normalizer
+from sklearn.multiclass import OneVsRestClassifier
 from sklearn.externals import joblib
+from sklearn import metrics
 
 import gensim
 from gensim.corpora import mmcorpus, Dictionary
-from gensim.models import lsimodel, ldamodel, tfidfmodel, rpmodel, logentropy_model, TfidfModel, LsiModel
+from gensim.models import tfidfmodel, TfidfModel, LsiModel
 from gensim import matutils,corpora
 
 import cppjiebapy
@@ -25,45 +38,53 @@ from gensim import models, corpora, similarities
 import Pyro4
 import zerorpc
 
+from django.conf import settings
 from pull.models import *
 
 #logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
 #print sys.getdefaultencoding()
 
-copus_path = '/opt/projects/packages/sougou_corpus'
-#copus_path = '/home/gan/download/sogou_copus'
+copus_path = settings.COPUS_PATH
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 def load_corpus():
     dictionary = corpora.Dictionary.load(os.path.join(HERE,'sogou.dict'))
     tfidf_model = tfidfmodel.TfidfModel.load(os.path.join(HERE, 'sogou.model'))
-    sg_class = joblib.load(os.path.join(HERE, 'sgdc_clf2.pkl'))
-    return dictionary, tfidf_model, sg_class
+    lsi_model = LsiModel.load(os.path.join(HERE, 'sogou.lsi'))
+    try:
+        sg_class = joblib.load(os.path.join(HERE, 'sgdc_clf.pkl'))
+    except:
+        sg_class = None
+    return dictionary, tfidf_model, lsi_model, sg_class
 
 def load_class_ids():
     cls_file = os.path.join(copus_path, 'ClassList.txt')
     cls_i = 0
     ids_cls = {}
+    cls_ids = {}
     with open(cls_file) as file:
         content = file.read().decode('gb2312').encode('utf-8').decode('utf-8')
         for l in content.split('\n'):
             cs = l.split()
             if len(cs) > 1:
                 ids_cls[cls_i] = cs[1]
+                cls_ids[cs[1]] = cls_i
                 cls_i += 1
-    return ids_cls
+    return ids_cls,cls_ids
 
-dictionary,tfidf_model,sg_class = load_corpus()
-id2cls = load_class_ids()
+dictionary,tfidf_model,lsi_model,sg_class = load_corpus()
+id2cls,cls_ids = load_class_ids()
 
 class MyCorpus(object):
     def __init__(self):
         self.cls_init = False
+        self.train_cnt = 17000
         self.cls_y = []
         self.cls_ids = {}
         self.ids_cls = {}
         self.cls = {}
+        self.test_y = list(np.random.randint(0, self.train_cnt, 4000))
 
         cls_file = os.path.join(copus_path, 'ClassList.txt')
         cls_i = 0
@@ -90,31 +111,87 @@ class MyCorpus(object):
                 for d3 in os.listdir(d1):
                     f = os.path.join(d1, d3)
                     if os.path.isfile(f):
-                        if not self.cls_init:
-                            self.cls_y.append(self.cls_ids[self.cls[d]])
+                        #if not self.cls_init:
+                        #    self.cls_y.append(self.cls_ids[self.cls[d]])
                         yield self.cls[d],f
+        #self.cls_init = True
+
+    def save_to_db(self):
+        corpus_db = []
+        cnt = 0
+        for c,f in self.iter_files():
+            corpus = SogouCorpus()
+            with open(f) as file:
+                content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
+                corpus.content = content
+                corpus.tokens = ','.join([s for s in Tokenize(content)])
+                corpus.classify = c
+                corpus_db.append(corpus)
+                cnt += 1
+                if cnt % 80 == 0:
+                    print '#',
+                    error = False
+                    try:
+                        SogouCorpus.objects.bulk_create(corpus_db)
+                    except:
+                        error = True
+                    if error:
+                        for cor in corpus_db:
+                            cor.save()
+                    corpus_db = []
+        if len(corpus_db) > 0:
+            error = False
+            try:
+                SogouCorpus.objects.bulk_create(corpus_db)
+            except:
+                error = True
+            if error:
+                for cor in corpus_db:
+                    cor.save()
+            corpus_db = []
+        print 'complete'
+    
+    def iter_documents_y(self):
+        for obj in SogouCorpus.objects.exclude(id__in=self.test_y):
+            self.cls_y.append(cls_ids[obj.classify])
+            yield obj.tokens
         self.cls_init = True
 
     def iter_documents(self):
-        for c,f in self.iter_files():
-            with open(f) as file:
-                content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
-                yield [s for s in Tokenize(content)]
+        for obj in SogouCorpus.objects.exclude(id__in=self.test_y):
+            yield obj.tokens
+
+    def iter_doc(self):
+        if self.cls_init:
+            iters = self.iter_documents
+        else:
+            iters = self.iter_documents_y
+        for t in iters():
+            yield t
 
     def __iter__(self):
-        for tokens in self.iter_documents():
-            yield self.dictionary.doc2bow(tokens)
+        for tokens in self.iter_doc():
+            yield self.dictionary.doc2bow(tokens.split(','))
+
+def save_corpus():
+    corpus = MyCorpus()
+    corpus.save_to_db()
 
 def make_corpus():
     corpus = MyCorpus()
     tfidf_model = TfidfModel(corpus)
+    corpus_idf = tfidf_model[corpus]
+    num_terms = 400
+    lsi_model = LsiModel(corpus_idf, id2word=corpus.dictionary, num_topics=num_terms)
     #corpora.MmCorpus.serialize('wiki_en_corpus.mm', corpus) # store to disk, for later use
     corpus.dictionary.save(os.path.join(HERE, 'sogou.dict')) # store the dictionary, for future reference
     tfidf_model.save(os.path.join(HERE, 'sogou.model'))
-
-    corpus_idf = tfidf_model[corpus]
-    num_terms = len(corpus.dictionary)
-    corpus_sparse = matutils.corpus2csc(corpus_idf, num_terms).transpose(copy=False)
+    lsi_model.save(os.path.join(HERE, 'sogou.lsi'))
+    print 'save dictionary and tfidf model'
+    
+    corpus_lsi = lsi_model[corpus_idf]
+    #num_terms = len(corpus.dictionary)
+    corpus_sparse = matutils.corpus2csc(corpus_lsi, num_terms).transpose(copy=False)
     #print corpus_sparse.shape
     #corpus_dense = matutils.corpus2dense(corpus_idf, len(corpus.dictionary))
     #print corpus_dense.shape
@@ -130,26 +207,102 @@ def do_classify():
     corpus = MyCorpus()
     #tfidf_model = TfidfModel(corpus)
     corpus_idf = tfidf_model[corpus]
+    #corpus_lsi = lsi_model[corpus_idf]
     num_terms = len(corpus.dictionary)
+    #num_terms = 400
     corpus_sparse = matutils.corpus2csc(corpus_idf, num_terms).transpose(copy=False)
     #print corpus_sparse.shape
     #corpus_dense = matutils.corpus2dense(corpus_idf, len(corpus.dictionary))
     #print corpus_dense.shape
-    clf = SGDClassifier(loss='hinge')
+    penalty = 'l2'
+    clf = SGDClassifier(loss='hinge', penalty=penalty, alpha=0.0001, n_iter=50, fit_intercept=True)
+    #clf = LinearSVC(loss='l2', penalty=penalty, dual=False, tol=1e-3)
     y = np.array(corpus.cls_y)
     #print y.shape
     clf.fit(corpus_sparse, y)
-    filename = os.path.join(HERE, 'sgdc_clf2.pkl')
+    filename = os.path.join(HERE, 'sgdc_clf.pkl')
     _ = joblib.dump(clf, filename, compress=9)
+    print 'train completely'
+
+    X_test = []
+    X_label = []
+    for obj in SogouCorpus.objects.filter(id__in=corpus.test_y):
+        X_test.append(obj.tokens)
+        X_label.append(cls_ids[obj.classify])
+        #result = classifier.predict(obj.tokens)
+    test_corpus = [dictionary.doc2bow(s.split(',')) for s in X_test]
+    test_corpus = tfidf_model[test_corpus]
+    test_corpus = matutils.corpus2csc(test_corpus, num_terms).transpose(copy=False)
+    pred = clf.predict(test_corpus)
+    score = metrics.f1_score(X_label, pred)
+    print("f1-score:   %0.3f" % score)
 
 def classify_content(content):
     num_terms = len(dictionary)
     test_corpus = tfidf_model[dictionary.doc2bow(list(Tokenize(content)))]
     test_sparse = matutils.corpus2csc([test_corpus], num_terms).transpose(copy=False)
     result = sg_class.predict(test_sparse)
-    print result
     return id2cls[result[0]]
     #return zip(id2cls.values(),result)
+
+def sklearn_test():
+    tok = lambda (x): x.split(',')
+    '''
+    classifier = Pipeline([
+        ('vectorizer', CountVectorizer(tokenizer=tok)),
+        ('tfidf', TfidfTransformer()),
+        ('chi', SelectKBest(chi2, k=120)),
+        ('clf', SGDClassifier(loss='hinge', penalty='l2', alpha=0.00001, n_iter=50, fit_intercept=True))])
+    '''
+
+    corpus = MyCorpus()
+    X_train = list(corpus.iter_doc())
+    Y_train = corpus.cls_y
+
+    #vectorizer = HashingVectorizer(tokenizer=tok, non_negative=True, n_features=2**16)
+    #X_train = vectorizer.transform(X_train)
+    hasher = HashingVectorizer(n_features=2**16,
+                               tokenizer=tok, non_negative=True,
+                               norm=None, binary=False)
+    vectorizer = Pipeline((
+        ('hasher', hasher),
+        ('tf_idf', TfidfTransformer())
+    ))
+    #vectorizer = TfidfVectorizer(tokenizer=tok, sublinear_tf=True, max_df=0.5)
+    X_train = vectorizer.fit_transform(X_train)
+    #ch2 = SelectKBest(chi2, k=400)
+    #X_train = ch2.fit_transform(X_train, Y_train)
+    #lsa = TruncatedSVD(400)
+    #X_train = lsa.fit_transform(X_train)
+    #X_train = Normalizer(copy=False).fit_transform(X_train)
+    clf = SGDClassifier(loss='hinge', penalty='l2', alpha=0.00001, n_iter=50, fit_intercept=True)
+    #clf = MultinomialNB(alpha=.01)
+    clf.fit(X_train, Y_train)
+    print 'train completely'
+    
+    X_test = []
+    X_label = []
+    for obj in SogouCorpus.objects.filter(id__in=corpus.test_y):
+        X_test.append(obj.tokens)
+        X_label.append(cls_ids[obj.classify])
+        #result = classifier.predict(obj.tokens)
+    X_test = vectorizer.transform(X_test)
+    #X_test = ch2.transform(X_test)
+    #X_test = lsa.transform(X_test)
+    #X_test = Normalizer(copy=False).transform(X_test)
+    pred = clf.predict(X_test)
+    score = metrics.f1_score(X_label, pred)
+    print("f1-score:   %0.3f" % score)
+    '''
+    i = 0
+    for n,id in enumerate(X_label):
+        if id != pred[n]:
+            print "(%d,%s,%s)" % (n,id2cls[pred[n]],id2cls[id]),
+            i += 1
+            if i % 18 == 0:
+                print ''
+    print 'error num=',i
+    '''
 
 #make_corpus()
 #do_classify()

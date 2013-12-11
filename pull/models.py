@@ -44,6 +44,11 @@ class HtmlContent(models.Model):
     def get_dup(self):
         return find_duplicate(self.hash)
 
+class SogouCorpus(models.Model):
+    content = models.TextField()
+    tokens = models.TextField()
+    classify = models.CharField(max_length=100)
+
 def find_duplicate(hash):
     #TODO for zerorpc
     hashm = zerorpc.Client('tcp://localhost:5678')
