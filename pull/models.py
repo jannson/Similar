@@ -35,6 +35,7 @@ class HtmlContent(models.Model):
     tags = models.CharField(max_length=200)
     category = models.ManyToManyField(Category, blank=True)
     summerize = models.CharField(max_length=400)
+    classify = models.CharField(max_length=100, blank=True)
     content = models.TextField()
     preview = models.TextField()
     status = models.IntegerField()

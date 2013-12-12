@@ -306,10 +306,19 @@ def sklearn_test():
 
 #make_corpus()
 #do_classify()
+# TODO do better for this
 def key_words(content, topk=18):
     vec_bow = dictionary.doc2bow([s for s in Tokenize(content)])
     tfidf_corpus = tfidf_model[vec_bow]
-    return [dictionary[d].decode('utf-8') for d,_ in sorted(list(tfidf_corpus), key=lambda item:-item[1])[0:topk]]
+
+    num_terms = len(dictionary)
+    test_sparse = matutils.corpus2csc([tfidf_corpus], num_terms).transpose(copy=False)
+    result = sg_class.predict(test_sparse)
+
+    words = [dictionary[d].decode('utf-8') for d,_ in sorted(list(tfidf_corpus), key=lambda item:-item[1])[0:topk]]
+    classify = id2cls[result[0]]
+
+    return (words,classify)
 
 CLUSTER_THRESHOLD = 5  # Distance between words to consider
 TOP_SENTENCES = 8  # Number of sentences to return for a "top n" summary
@@ -373,13 +382,13 @@ def summarize(txt):
         sentences.append(s.lower())
     normalized_sentences = [s.lower() for s in sentences]
 
-    top_n_words = key_words(txt, N_2)
+    (top_n_words,cls) = key_words(txt, N_2)
     scored_sentences = __score_sentences(sentences, top_n_words)
 
     top_n_scored = sorted(scored_sentences, key=lambda s: s[1])[-TOP_SENTENCES:]
     top_n_scored = sorted(top_n_scored, key=lambda s: s[0])
     top_n_summary=[sentences[idx] for (idx, score) in top_n_scored]
-    return ', '.join(top_n_words[:18]), u'。 '.join(top_n_summary) + u'。'
+    return ', '.join(top_n_words[:18]), u'。 '.join(top_n_summary) + u'。', cls
 
 def summarize2(txt):
     return summarize(txt)[1]
@@ -400,7 +409,7 @@ def summarize3(txt):
         sentences.append(s.lower())
     normalized_sentences = [s.lower() for s in sentences]
 
-    top_n_words = key_words(txt, N_3)
+    (top_n_words,_) = key_words(txt, N_3)
     scored_sentences = __score_sentences(normalized_sentences, top_n_words)
     avg_list = [s[1] for s in scored_sentences]
     avg = np.mean(avg_list)
@@ -472,11 +481,3 @@ def sim_index(obj):
     doc['tokens'] = [s for s in Tokenize(obj.content)]
     server.index([doc])
 
-def test():
-    with open(os.path.join(copus_path, 'Sample/C000007/10.txt')) as file:
-        content = file.read().decode('gb2312', 'ignore').encode('utf-8').decode('utf-8', 'replace')
-        #print ' '.join(key_words(content))
-        #print summarize2(content)
-        #print summarize3(content)
-
-#test()

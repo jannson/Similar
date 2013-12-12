@@ -39,15 +39,26 @@ def iter_documents():
             print 'processing', obj.id
         yield doc
 
-#server = SessionServer('/tmp/server')
-server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+def iter_corpus():
+    for obj in SogouCorpus.objects.all():
+        doc = {}
+        doc['id'] = 'html_%d' % obj.id
+        #doc['tokens'] = [s for s in Tokenize(obj.content)]
+        doc['tokens'] = list(Tokenize(obj.content))
+        if obj.id % 1000 == 0:
+            print 'processing', obj.id
+        yield doc
+
+server = SessionServer('/tmp/server')
+#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def train_server():
-    training_corpus = iter_documents()
-    #server.train(list(training_corpus), method='lsi')
-    #print 'train finished'
+    #training_corpus = iter_documents()
+    training_corpus = iter_corpus()
+    server.train(list(training_corpus), method='lsi')
+    print 'train finished'
     #server.index()
-    server.index(training_corpus)
-    print 'index finished'
+    #server.index(training_corpus)
+    #print 'index finished'
     server.optimize()
     print 'optimize finished'
 
