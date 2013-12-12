@@ -87,7 +87,7 @@ class MyCorpus(object):
         self.cls_ids = {}
         self.ids_cls = {}
         self.cls = {}
-        self.test_y = list(np.random.randint(0, self.train_cnt, 4000))
+        self.test_y = list(np.random.randint(0, self.train_cnt, 800))
 
         cls_file = os.path.join(copus_path, 'ClassList.txt')
         cls_i = 0

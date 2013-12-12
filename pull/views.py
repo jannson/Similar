@@ -233,7 +233,7 @@ class ClassShow(ListView):
         print self.kwargs
         id = self.kwargs['id']
         cls = id2cls_func(int(id))
-        object_list = HtmlContent.objects.filter(status=1).filter(classify=cls).filter(~Q(content='')).order_by('-id')
+        object_list = HtmlContent.objects.filter(status=0).filter(classify=cls).filter(~Q(content='')).order_by('-id')
         return object_list
 
     def get_context_data(self, **kwargs):
