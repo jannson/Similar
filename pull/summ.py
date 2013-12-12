@@ -76,6 +76,9 @@ def load_class_ids():
 dictionary,tfidf_model,lsi_model,sg_class = load_corpus()
 id2cls,cls_ids = load_class_ids()
 
+def id2cls_func(id):
+    return id2cls[id]
+
 class MyCorpus(object):
     def __init__(self):
         self.cls_init = False
@@ -84,7 +87,7 @@ class MyCorpus(object):
         self.cls_ids = {}
         self.ids_cls = {}
         self.cls = {}
-        self.test_y = list(np.random.randint(0, self.train_cnt, 4000))
+        self.test_y = list(np.random.randint(0, self.train_cnt, 800))
 
         cls_file = os.path.join(copus_path, 'ClassList.txt')
         cls_i = 0
@@ -98,7 +101,7 @@ class MyCorpus(object):
                     self.cls_ids[cs[1]] = cls_i
                     cls_i += 1
 
-        #self.dictionary = gensim.corpora.Dictionary(self.iter_documents())
+        #self.dictionary = gensim.corpora.Dictionary(self.iter_tokens())
         #self.dictionary.filter_extremes(no_below=1, keep_n=20000) # check API docs for pruning params
         #self.dictionary.save_as_text('sogou_dic.txt')
         self.dictionary = dictionary
@@ -161,6 +164,10 @@ class MyCorpus(object):
         for obj in SogouCorpus.objects.exclude(id__in=self.test_y):
             yield obj.tokens
 
+    def iter_tokens(self):
+        for tokens in self.iter_doc():
+            yield tokens.split(',')
+
     def iter_doc(self):
         if self.cls_init:
             iters = self.iter_documents
@@ -188,7 +195,7 @@ def make_corpus():
     tfidf_model.save(os.path.join(HERE, 'sogou.model'))
     lsi_model.save(os.path.join(HERE, 'sogou.lsi'))
     print 'save dictionary and tfidf model'
-    
+    '''    
     corpus_lsi = lsi_model[corpus_idf]
     #num_terms = len(corpus.dictionary)
     corpus_sparse = matutils.corpus2csc(corpus_lsi, num_terms).transpose(copy=False)
@@ -202,6 +209,7 @@ def make_corpus():
     clf.fit(corpus_sparse, y)
     filename = os.path.join(HERE, 'sgdc_clf.pkl')
     _ = joblib.dump(clf, filename, compress=9)
+    '''
 
 def do_classify():
     corpus = MyCorpus()

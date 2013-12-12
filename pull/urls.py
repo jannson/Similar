@@ -16,6 +16,7 @@ urlpatterns = patterns('',
     # Uncomment the next line to enable the admin:
     url(r'^$', NewsListView.as_view()),
     url(r'^new/(\d+)/$', NewsSubject),
+    url(r'^class/(?P<id>\d+)/$', ClassShow.as_view()),
     url(r'^admin/', include(admin.site.urls)),
     url(r'^p/(?P<path>.*)$', proxy_to),
     #url(r'^task/(?P<id>\d+)$', task_to),
