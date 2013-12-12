@@ -24,7 +24,7 @@ from django.db.models import Q
 from django.conf import settings
 from pull.models import *
 from extract import TextExtract, TextToHtml, ContentEncodingProcessor, USER_AGENT
-from summ import summarize, sim_search, sim_content, sim_index
+from summ import summarize, sim_search, sim_content, sim_index, id2cls_func
 
 # Default values.
 REDIS_URL = None
@@ -143,7 +143,7 @@ def json_response(func):
 
 def html_to_json(html):
     the_data = {'status':'200', 'title':html.title, 'tags':html.tags, 'desc':html.summerize\
-            , 'content':TextToHtml(html.content), 'results': html.preview}
+            ,'classify':html.classify, 'content':TextToHtml(html.content), 'results': html.preview}
     return the_data
 
 @json_response
@@ -223,3 +223,23 @@ class DupListView(ListView):
     queryset = HtmlContent.objects.filter(status=1).filter(~Q(content='')).order_by('-id')
     paginate_by = 25
     template_name = 'dup_list.html'
+
+class ClassShow(ListView):
+    template_name = 'cls_list.html'
+    paginate_by = 25
+    #model = HtmlContent
+
+    def get_queryset(self):
+        print self.kwargs
+        id = self.kwargs['id']
+        cls = id2cls_func(int(id))
+        object_list = HtmlContent.objects.filter(status=1).filter(classify=cls).filter(~Q(content='')).order_by('-id')
+        return object_list
+
+    def get_context_data(self, **kwargs):
+        context = super(ClassShow, self).get_context_data(**kwargs)
+        id = self.kwargs['id']
+        cls = id2cls_func(int(id))
+        context['classify'] = cls
+        context['the_ids'] = range(10)
+        return context

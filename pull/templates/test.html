@@ -42,6 +42,7 @@ li {list-style:none;}
 
 <div id="content">
     <h3>标题：</h3><div id="mainTitle"></div>
+    <h3>分类：</h3><div id="divClassify"></div>
     <h3>关键字：</h3><div id="divKeywords"></div>
     <h3>摘要：</h3><div id="divDesc"></div>
 <h3>内容：</h3>
@@ -79,6 +80,7 @@ li {list-style:none;}
                 if(data.status == '200') {
                     this_data = data
                     $("#mainTitle").html(data.title);
+                    $("#divClassify").html(data.classify);
                     $("#divKeywords").html(data.tags);
                     $("#divDesc").html(data.desc);
                     $("#divContent").html(data.results);
