@@ -14,6 +14,7 @@ from sklearn.feature_extraction.text import TfidfTransformer
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.preprocessing import Normalizer
 from sklearn.decomposition import TruncatedSVD
+import networkx as nx
 
 logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -104,32 +105,43 @@ def test_rank2(obj):
     top_n_summary = []
     for index in sorted(rank.top_index(3)):
         top_n_summary.append(sents[index])
-    return u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'
+    print 'test_rank2', u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'
 
 def test_rank3(obj):
     sents = list(cut_sentence(obj.content))
     docs = [list(Tokenize(sent)) for sent in sents]
     vect = TfidfVectorizer(min_df=1,tokenizer=Tokenize)
     tfidf = vect.fit_transform(sents)
-    lsa = TruncatedSVD(2)
+    lsa = TruncatedSVD(5)
     lsa_res = lsa.fit_transform(tfidf)
     lsa_res = Normalizer(copy=False).fit_transform(lsa_res)
-    test_a = [a for a in lsa_res]
-    sim_res = np.fromiter(itertools.imap(cos_distance, itertools.product(test_a,test_a)), dtype=np.float)
-    l = len(sents)
-    sim_res = np.reshape(sim_res,(l,l))
-    rank = TextRank(sim_res)
-    rank.solve()
-    top_n_summary = []
-    for index in rank.top_index(5):
-        top_n_summary.append(sents[index])
-    print 'test_rank1 ', u'。 '.join(top_n_summary).replace('\r','').replace('\n','')
+    tfidf_graph = np.dot(lsa_res,lsa_res.T)
+    tfidf_graph = abs(Normalizer(copy=False).fit_transform(tfidf_graph))
+    nx_graph = nx.from_numpy_matrix(tfidf_graph)
+    scores = nx.pagerank(nx_graph)
+    res = sorted(((scores[i],i) for i,s in enumerate(sents)), reverse=True)
+    top_n_summary = [sents[i] for _,i in sorted(res[:3])]
+    print 'test_rank3', u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'
+
+def text_rank4(obj):
+    sents = list(cut_sentence(obj.content))
+    vect = TfidfVectorizer(min_df=1,tokenizer=Tokenize)
+    tfidf = vect.fit_transform(sents)
+    tfidf_graph = tfidf*tfidf.T
+    #print 's ', tfidf_graph.A
+    #print 'o ', np.dot(tfidf.A,tfidf.A.T)
+    nx_graph = nx.from_scipy_sparse_matrix(tfidf_graph)
+    scores = nx.pagerank(nx_graph)
+    res = sorted(((scores[i],i) for i,s in enumerate(sents)), reverse=True)
+    top_n_summary = [sents[i] for _,i in sorted(res[:3])]
+    print 'text_rank4', u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'
 
 def test4():
     obj = HtmlContent.objects.get(pk=46)
     #test_rank1(obj)
     test_rank2(obj)
     #test_rank3(obj)
+    text_rank4(obj)
 
 def test5():
     for obj in HtmlContent.objects.filter(~Q(content='')):
@@ -141,8 +153,8 @@ def test5():
 #test1()
 #test2()
 #test3()
-#test4()
-test5()
+test4()
+#test5()
 
 '''
 prof = profile.Profile()
