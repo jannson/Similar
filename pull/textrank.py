@@ -2,28 +2,21 @@
 from __future__ import unicode_literals
 
 from bm25 import BM25
-
+import math
 
 class TextRank(object):
-
-    def __init__(self, docs):
-        self.docs = docs
-        self.bm25 = BM25(docs)
-        self.D = len(docs)
+    def __init__(self, weight):
+        self.D = len(weight[0])
         self.d = 0.85
-        self.weight = []
-        self.weight_sum = []
-        self.vertex = []
         self.max_iter = 200
-        self.min_diff = 0.001
+        self.min_diff = 0.00001
         self.top = []
 
+        self.weight = weight
+        self.weight_sum = [sum(w) for w in weight]
+        self.vertex = [1.0]*self.D
+
     def solve(self):
-        for doc in self.docs:
-            scores = self.bm25.simall(doc)
-            self.weight.append(scores)
-            self.weight_sum.append(sum(scores))
-            self.vertex.append(1.0)
         for _ in range(self.max_iter):
             m = []
             max_diff = 0
@@ -44,9 +37,6 @@ class TextRank(object):
 
     def top_index(self, limit):
         return list(map(lambda x: x[0], self.top))[:limit]
-
-    def top(self, limit):
-        return list(map(lambda x: self.docs[x[0]], self.top))
 
 
 class KeywordTextRank(object):

@@ -48,3 +48,11 @@ class BM25(object):
             score = self.sim(doc, index)
             scores.append(score)
         return scores
+
+def bm25_weights(docs):
+    bm25 = BM25(docs)
+    weights = []
+    for doc in docs:
+        scores = bm25.simall(doc)
+        weights.append(scores)
+    return weights

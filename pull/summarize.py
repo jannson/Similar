@@ -14,11 +14,12 @@ def key_rank(text, topk=18):
     return keys
 
 def sum_rank(text):
-    sents = list(cut_sentence(text))
+    sents = list(cut_sentence(obj.content))
     docs = [list(Tokenize(sent)) for sent in sents]
-    rank = textrank.TextRank(docs)
+    sim_res = bm25_weights(docs)
+    rank = TextRank(sim_res)
     rank.solve()
     top_n_summary = []
-    for index in rank.top_index(5):
+    for index in sorted(rank.top_index(3)):
         top_n_summary.append(sents[index])
-    return u'。 '.join(top_n_summary)
+    return u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'

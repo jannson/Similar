@@ -40,6 +40,8 @@ import zerorpc
 
 from django.conf import settings
 from pull.models import *
+from bm25 import BM25, bm25_weights
+from textrank import TextRank
 
 #logging.basicConfig(format='%(asctime)s : %(levelname)s : %(message)s', level=logging.INFO)
 
@@ -315,8 +317,8 @@ def sklearn_test():
 #make_corpus()
 #do_classify()
 # TODO do better for this
-def key_words(content, topk=18):
-    vec_bow = dictionary.doc2bow([s for s in Tokenize(content)])
+def key_words(keys, topk=18):
+    vec_bow = dictionary.doc2bow(keys)
     tfidf_corpus = tfidf_model[vec_bow]
 
     num_terms = len(dictionary)
@@ -385,18 +387,15 @@ def __score_sentences(sentences, important_words):
 
 N_2 = 68  # Number of words to consider
 def summarize(txt):
-    sentences = []
-    for s in cppjiebapy.cut_sentence(txt):
-        sentences.append(s.lower())
-    normalized_sentences = [s.lower() for s in sentences]
+    sents = list(cppjiebapy.cut_sentence(txt))
+    docs = [list(Tokenize(sent)) for sent in sents]
+    keys = []
+    for d in docs:
+        keys += d
+    (top_n_words,cls) = key_words(keys, N_2)
+    top_n_sum = summarize4(sents, docs)
 
-    (top_n_words,cls) = key_words(txt, N_2)
-    scored_sentences = __score_sentences(sentences, top_n_words)
-
-    top_n_scored = sorted(scored_sentences, key=lambda s: s[1])[-TOP_SENTENCES:]
-    top_n_scored = sorted(top_n_scored, key=lambda s: s[0])
-    top_n_summary=[sentences[idx] for (idx, score) in top_n_scored]
-    return ', '.join(top_n_words[:18]), u'。 '.join(top_n_summary) + u'。', cls
+    return ', '.join(top_n_words[:18]), top_n_sum, cls
 
 def summarize2(txt):
     return summarize(txt)[1]
@@ -427,6 +426,17 @@ def summarize3(txt):
                    if score > avg + 0.5 * std]
     mean_scored_summary=[sentences[idx] for (idx, score) in mean_scored]
     return u'。 '.join(mean_scored_summary) + u'。 '
+
+def summarize4(sents, docs=None):
+    if not docs:
+        docs = [list(Tokenize(sent)) for sent in sents]
+    sim_res = bm25_weights(docs)
+    rank = TextRank(sim_res)
+    rank.solve()
+    top_n_summary = []
+    for index in sorted(rank.top_index(3)):
+        top_n_summary.append(sents[index])
+    return u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'
 
 #server = SessionServer('/tmp/server')
 server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
