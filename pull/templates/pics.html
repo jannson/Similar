@@ -1,23 +1,29 @@
-<html><head><title>好文章</title>
+<html><head><title>图片搜索</title>
 <meta name="description" content="资讯,好文章，获取正文"/>
+<meta charset="utf-8"/>
   <link rel="shortcut icon" href="/favicon.ico" />
-        <meta charset="utf-8"/>
-        <style>
-			img{border:0px currentcolor}:focus{outline:0px}h1{font-size:100%;font-weight:normal}h3{font-size:100%;font-weight:normal}a{text-decoration:none}body{font-family:微软雅黑;font-size:14px;background-image:url(http://1-ps.googleusercontent.com/h/download.wohuia.com/images/xbg_bd.png.pagespeed.ic.7i8eUJulab.png);background-color:#fff;color:#333;line-height:1.5;background-position:initial initial;background-repeat:initial initial}
-			.sim{font-size:12px;font-style:italic;color:#888FFF;}
-        </style>
-    </head>
-    <body>
+  <style type="text/css">
+	  body{padding:0; margin:0;}
+	  #warp{width:1200px; margin:0 auto; text-align:center; margin-top:10px;}
+	  ul{width:1200px; list-style-type:none; overflow:hidden; margin:0 auto; padding:0;}
+	  ul li{float:left; margin-right:15px; text-align:center; margin-top:10px;}
+	  ul li span{ display:block; height:25px; line-height:25px;}
+
+  </style>
+  </head>
+  <body>
+	  <div id="wrap">
     <h2>图片搜索示例</h2>
-    <p>Search pic id:{{pic}} (0表示列出<a href='/pic/'>所有当中的50个</a>)</p>
-    <div>
+	<p>Search pic id:{{pic}} (0表示列出<a href='/pic/'>随机的50个</a>)</p>
+	<ul>
     {% for obj in object_list %}
-        <span>
+        <li>
             <a href="/pic/?id={{obj.id}}" alt='{{obj.id}}'>
-                <img alt='{{obj.id}}' src='{{obj.url}}'/></a>
+				<img alt='{{obj.id}}' src='{{obj.url}}'/></a><br/>
             <span>相似度:{{obj.sim}}</span>
-        </span>  
-    {% endfor %}
+        </li>  
+		{% endfor %}
+	</ul>
     <div>
     </body>
 </html>

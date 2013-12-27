@@ -1,6 +1,7 @@
 import os
 from xmlrpclib import ServerProxy
 from django.conf import settings
+import random
 
 server = ServerProxy("http://localhost:31128/RPC")
 data_dir = settings.DATA_DIR
@@ -32,11 +33,11 @@ def query_img(id):
     results = []
     url_base = '/static/pic/'
     if id == 0:
-        for p in data_pic[:50]:
-            results.append({'id':p['id'], 'url': '%s%d.jpg'%(url_base,p['id']), 'sim':0.0})
+        for p in random.sample(data_pic, 50):
+            results.append({'id':p['id'], 'url': '%s%d.jpg'%(url_base,p['id']), 'sim':'0.0'})
     else:
         for p in res:
-            results.append({'id':p[0], 'url': '%s%d.jpg'%(url_base,p[0]), 'sim':p[1]})
+            results.append({'id':p[0], 'url': '%s%d.jpg'%(url_base,p[0]), 'sim':'%.2f'%p[1]})
     return results
 
-print query_img(0)
+#print query_img(0)
