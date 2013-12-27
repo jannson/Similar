@@ -23,5 +23,6 @@ urlpatterns = patterns('',
     url(r'^like/(?P<path>.*)$', like_models),
     url(r'^search/(?P<path>.*)$', search_content),
     url(r'^dup$', DupListView.as_view()),
+    url(r'^pic/(?P<path>.*)$', search_pic),
     url(r'^test$', test_page),
 )

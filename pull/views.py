@@ -25,6 +25,7 @@ from django.conf import settings
 from pull.models import *
 from extract import TextExtract, TextToHtml, ContentEncodingProcessor, USER_AGENT
 from summ import summarize, sim_search, sim_content, sim_index, id2cls_func
+from isk import query_img
 
 # Default values.
 REDIS_URL = None
@@ -243,3 +244,16 @@ class ClassShow(ListView):
         context['classify'] = cls
         context['the_ids'] = range(10)
         return context
+
+def search_pic(request, path):
+    pic = request.GET.get('id')
+    if pic and pic.strip() != '':
+        try:
+            pic = int(pic)
+        except:
+            pic = 0
+    else:
+        pic = 0
+    object_list = query_img(pic)
+    return render_to_response('pics.html', {'pic':pic, 'object_list':object_list})
+

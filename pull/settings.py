@@ -131,6 +131,7 @@ STATIC_URL = '/static/'
 # in apps' "static/" subdirectories and in STATICFILES_DIRS.
 # Example: "/home/media/media.lawrence.com/static/"
 STATIC_ROOT = os.path.join(PROJECT_ROOT, STATIC_URL.strip("/"))
+DATA_DIR = os.path.join(STATIC_ROOT, 'pic')
 
 # Additional locations of static files
 STATICFILES_DIRS = (
