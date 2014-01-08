@@ -439,7 +439,7 @@ def summarize4(sents, docs=None):
     return u'。 '.join(top_n_summary).replace('\r','').replace('\n','')+u'。'
 
 #server = SessionServer('/tmp/server')
-#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def sim_search(html):
     model_pks = []
     scores = []
