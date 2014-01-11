@@ -26,7 +26,7 @@ from django.db.models import Count
 from django.db.models import Q
 from pull.models import *
 from cppjiebapy import Tokenize
-from pull.summ import summarize, classify_content, do_classify, save_corpus, make_corpus
+from pull.summ import summarize, classify_content, do_classify, save_corpus, make_corpus, classify_vector_test
 
 def iter_documents():
     """Iterate over all documents, yielding a document (=list of utf8 tokens) at a time."""
@@ -113,17 +113,12 @@ def search2(doc):
 #save_corpus()
 #make_corpus()
 #do_classify()
-content = u'市国税局推出推进出口货物跨部门合作机制'
+#content = u'市国税局推出推进出口货物跨部门合作机制'
 #for v,score in search2('html_6769'):
 #    print "%s(%f) / " % (v.title.split('|')[0],score),
-obj = HtmlContent.objects.get(pk=524)
-print classify_content(content)
+#obj = HtmlContent.objects.get(pk=524)
+#print classify_content(content)
 #for v,score in search(obj.content):
 #    print "%s(%f) / " % (v.title.split('|')[0],score),
-'''class SearchQuerySet(object):
-    def __init__(self, content):
-    def __len__(self):
-    def __iter__(self):
-    def __getitem__(self, k):
-    def count(self):
-        return len(self)'''
+
+classify_vector_test()

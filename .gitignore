@@ -48,3 +48,4 @@ log_*
 *.pkl
 pull/local_settings.py
 pull/static/pic/*
+sogou_index.lsi.0

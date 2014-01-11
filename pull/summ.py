@@ -7,6 +7,7 @@ import os
 import os.path
 import tempfile
 import logging
+import itertools
 
 import numpy as np
 from sklearn.decomposition import TruncatedSVD
@@ -247,6 +248,13 @@ def do_classify():
     score = metrics.f1_score(X_label, pred)
     print("f1-score:   %0.3f" % score)
 
+def cos_distance(t):
+    (a,b) = t
+    dist = np.linalg.norm(a-b)
+    return dist
+    #return (1.0 / (1.0+dist) )
+    #return (0.5+0.5*dist)
+
 def classify_content(content):
     num_terms = len(dictionary)
     test_corpus = tfidf_model[dictionary.doc2bow(list(Tokenize(content)))]
@@ -255,7 +263,68 @@ def classify_content(content):
     return id2cls[result[0]]
     #return zip(id2cls.values(),result)
 
-def sklearn_test():
+def classify_vector_test():
+    #print cls_ids
+    cls = id2cls.values()
+    num_terms = 400
+
+    cls_file = os.path.join(HERE, 'sogou_cls.lsi.npy')
+    cls_array = np.load(cls_file)
+    cls_array = cls_array[1:]
+    cls_array = matutils.unitvec(cls_array)
+    print ','.join([id2cls[i] for i in range(len(cls))[1:]])
+    rlt = np.dot(cls_array, cls_array.T)
+    for i in range(rlt.shape[0]):
+        tmp = 1 / rlt[i][i]
+        rlt[i] = tmp * rlt[i]
+    print rlt
+
+    '''
+    sim_res = np.fromiter(itertools.imap(cos_distance, itertools.product(cls_array,cls_array)), dtype=np.float32)
+    sim_res = np.reshape(sim_res,(cls_array.shape[0],cls_array.shape[0]))
+    print sim_res
+
+    #cls_array = np.zeros((len(cls), num_terms)).astype(np.float32)
+    
+    texts = []
+    ids = {}
+    i = 0
+    for t in SogouCorpus.objects.all():
+        if t.id != i:
+            #ids[t.id] = i
+            ids[i] = t.id
+        i += 1
+        texts.append(dictionary.doc2bow(t.tokens.split(',')))
+
+    texts = tfidf_model[texts]
+    texts = lsi_model[texts]
+    
+    index_file = os.path.join(HERE, 'sogou_index.lsi')
+    index = similarities.Similarity(index_file,
+        corpus=texts,
+        num_features=num_terms,
+        num_best=10,
+    )
+
+    sims = [i for i in index[cls_array[2]]]
+    for id,si in sims:
+        print ids[id], si
+
+    for i in range(len(cls)):
+        cl = id2cls[i]
+        ll = 0
+        for t in SogouCorpus.objects.filter(classify=cl): 
+            cls_array[i] += index.vector_by_id(ids[t.id])
+            ll += 1
+        if ll == 0:
+            continue
+        cls_array[i] = cls_array[i] / ll
+    
+    print cls_array.shape
+    np.save(cls_file, cls_array)
+    '''
+
+def sklearn_cls_test():
     tok = lambda (x): x.split(',')
     '''
     classifier = Pipeline([
