@@ -1,0 +1,17 @@
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '1', 'a', 'u', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '1', 'b', 'u', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '1', 'c', 'd', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '1', 'd', 'u', 'a', '', '');
+
+
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '2', 'a', 'u', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '2', 'b', 'u', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '2', 'd', 'd', 'a', '', '');
+
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '3', 'b', 'd', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '3', 'c', 'u', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '3', 'd', 'u', 'a', '', '');
+
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '4', 'a', 'u', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '4', 'b', 'd', 'a', '', '');
+INSERT INTO `xxhh`.`xxhh_testlog` (`id`, `post_id`, `guid`, `uaction`, `pos`, `shiduan`, `ctime`) VALUES (NULL, '4', 'd', 'u', 'a', '', '');
