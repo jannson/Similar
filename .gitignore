@@ -49,3 +49,5 @@ log_*
 pull/local_settings.py
 pull/static/pic/*
 sogou_index.lsi.0
+out.diff
+out.freq

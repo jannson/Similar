@@ -2,6 +2,7 @@ import sys, os, os.path
 import codecs
 from scipy.sparse import *
 from scipy import *
+from sklearn.externals import joblib
 
 django_path = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(13, django_path)
@@ -10,6 +11,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'xxhh.settings'
 from django.db.models import Count
 from django.db.models import Q
 from xxhh.models import TestLog as XhLogUd
+#from xxhh.models import XhLogUd
 
 diff = lil_matrix( (100000,100000), dtype=float)
 diff[1,2] = 8.0
@@ -230,10 +232,15 @@ class WeightSlopeOne(object):
             return 0
         return prediction / freqs
 
-slope = BiPolarSlopeOne(ratings)
-#slope = WeightSlopeOne(ratings)
+    def save(self, filename):
+        _ = joblib.dump(self.diff_like, filename+'.diff', compress=9)
+        _ = joblib.dump(self.freq_like, filename+'.freq', compress=9)
+
+#slope = BiPolarSlopeOne(ratings)
+slope = WeightSlopeOne(ratings)
 slope.train()
+slope.save('out')
 print 'train complete'
 
 #print ratings.guid2id[u'C'], ratings.post2id[2]
-print slope.perdict(ratings.guid2id[u'C'], ratings.post2id[2])
+#print slope.perdict(ratings.guid2id[u'C'], ratings.post2id[2])
