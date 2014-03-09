@@ -9,14 +9,35 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'xxhh.settings'
 
 from django.db.models import Count
 from django.db.models import Q
-from xxhh.models import *
+from xxhh.models import TestLog as XhLogUd
 
 diff = lil_matrix( (100000,100000), dtype=float)
 diff[1,2] = 8.0
 diff[0,1] = 2.0
+diff[4,5] = 1.0
 
-for a in diff.nonzero():
-    print a[0], a[1]
+#for a in diff.nonzero():
+#    print a
+
+def input_test():
+    with codecs.open('trainsmall.txt', 'r', 'utf-8') as f:
+        for line in f:
+            items = line.split()
+            print items
+            if len(items) > 2:
+                xh = XhLogUd()
+                xh.guid = items[0]
+                xh.post_id = int(items[1])
+                score = int(items[2])
+                if score == 1:
+                    xh.uaction = 'd'
+                else:
+                    xh.uaction = 'u'
+                xh.pos = 'z'
+                xh.shiduan = 9
+                xh.ctime = 9
+                xh.save()
+#input_test()
 
 #for obj in XhLogUd.objects.all()[0:10]:
 #    print obj.post_id, obj.guid, obj.uaction
@@ -31,8 +52,8 @@ for a in diff.nonzero():
 #print len(XhLogUd.objects.values("post_id").distinct())
 
 RATE = {}
-RATE['u'] = 1.0
-RATE['d'] = (0.0-1.0)
+RATE['u'] = 3.0
+RATE['d'] = 1.0
 
 class Ratings(object):
     def __init__(self):
@@ -72,7 +93,7 @@ class Ratings(object):
     def by_user(self, id):
         return self.guids[id]
 
-#ratings = Ratings()
+ratings = Ratings()
 print 'Ratings created'
 
 '''
@@ -112,16 +133,20 @@ class BiPolarSlopeOne(object):
                         self.freq_dislike[rate1[2], rate2[2]] += 1
                         self.diff_dislike[rate1[2], rate2[2]] += rate1[0]-rate2[0]
 
-        for pair in self.freq_like.nonzero():
-            if len(pair) == 0:
-                break
-            if pair[0] < pair[1] and self.freq_dislike[pair[0], pair[1]] != 0:
-                self.diff_like[pair[0], pair[1]] /= self.freq_like[pair[0], pair[1]]
-        for pair in self.freq_dislike.nonzero():
-            if len(pair) == 0:
-                break
-            if pair[0] < pair[1] and self.freq_dislike[pair[0], pair[1]] != 0:
-                self.diff_dislike[pair[0], pair[1]] /= self.freq_dislike[pair[0], pair[1]]
+        not_zero = self.freq_like.nonzero()
+        if len(not_zero) > 0:
+            for index in xrange(len(not_zero[0])):
+                x = not_zero[0][index]
+                y = not_zero[1][index]
+                if x < y:
+                    self.diff_like[x, y] /= self.freq_like[x, y]
+        not_zero = self.freq_like.nonzero()
+        if len(not_zero) > 0:
+            for index in xrange(len(not_zero[0])):
+                x = not_zero[0][index]
+                y = not_zero[1][index]
+                if x < y:
+                    self.diff_dislike[x, y] /= self.freq_dislike[x, y]
 
     def can_predict(self, user_id, item_id):
         for rate in self.ratings.by_user(user_id):
@@ -139,12 +164,12 @@ class BiPolarSlopeOne(object):
             if rate[0] >= self.user_average[user_id]:
                 f = self.freq_like[item_id, rate[2]]
                 if f != 0:
-                    prediction += self.diff_like[item_id, rate[2]] + rate[0]
+                    prediction += (self.diff_like[item_id, rate[2]] + rate[0])*f
                     freqs += f
             else:
                 f = self.freq_dislike[item_id, rate[2]]
                 if f != 0:
-                    prediction += self.diff_dislike[item_id, rate[2]] + rate[0]
+                    prediction += (self.diff_dislike[item_id, rate[2]] + rate[0])*f
                     freqs += f
         if freqs == 0:
             return 0
@@ -171,17 +196,20 @@ class WeightSlopeOne(object):
         self.init_model()
 
         for user_id in xrange(len(self.ratings.id2guid)):
-            print 'Begin train for user %s len=%d' % (user_id, len(self.ratings.by_user(user_id)))
+            #print 'Begin train for user %s len=%d' % (user_id, len(self.ratings.by_user(user_id)))
             for rate1 in self.ratings.by_user(user_id):
                 for rate2 in self.ratings.by_user(user_id):
                     self.freq_like[rate1[2], rate2[2]] += 1
                     self.diff_like[rate1[2], rate2[2]] += rate1[0]-rate2[0]
-
-        for pair in self.freq_like.nonzero():
-            if len(pair) == 0:
-                break
-            if pair[0] < pair[1]:
-                self.diff_like[pair[0], pair[1]] /= self.freq_like[pair[0], pair[1]]
+        
+        not_zero = self.freq_like.nonzero()
+        if len(not_zero) > 0:
+            for index in xrange(len(not_zero[0])):
+                x = not_zero[0][index]
+                y = not_zero[1][index]
+                #if x < y:
+                if x != y:
+                    self.diff_like[x, y] /= self.freq_like[x, y]
 
     def can_predict(self, user_id, item_id):
         for rate in self.ratings.by_user(user_id):
@@ -196,15 +224,16 @@ class WeightSlopeOne(object):
         for rate in self.ratings.by_user(user_id):
             f = self.freq_like[item_id, rate[2]]
             if f != 0:
-                prediction += self.diff_like[item_id, rate[2]] + rate[0]
+                prediction += (self.diff_like[item_id, rate[2]] + rate[0])*f
                 freqs += f
         if freqs == 0:
             return 0
         return prediction / freqs
 
-slope = WeightSlopeOne(ratings)
-'''
+slope = BiPolarSlopeOne(ratings)
+#slope = WeightSlopeOne(ratings)
 slope.train()
 print 'train complete'
-print ratings.id2guid[2], ratings.id2post[2],  slope.perdict(2, 3)
-'''
+
+#print ratings.guid2id[u'C'], ratings.post2id[2]
+print slope.perdict(ratings.guid2id[u'C'], ratings.post2id[2])
