@@ -49,11 +49,16 @@ def rank2():
 
     posts1 = [set() for _ in id2post]
     posts2 = [set() for _ in id2post]
+    good_post = 0
+    bad_post = 0
     for obj in all_objs:
         if obj.uaction == 'u':
             posts1[post2id[obj.post_id]].add(guid2id[obj.guid])
+            good_post += 1
         else:
             posts2[post2id[obj.post_id]].add(guid2id[obj.guid])
+            bad_post += 1
+    good_bad = math.sqrt(float(good_post)/float(bad_post))
 
     print "all users", len(id2guid)
     print "all items", len(id2post)
@@ -64,16 +69,16 @@ def rank2():
         if len(posts1[x]) > 0:
             for y in posts1[x]:
                 len_y = len(guids1[y])
-                if y > 2:
-                    score1 += math.sqrt(1.0/len_y)
+                if y > 1:
+                    score1 += math.sqrt(len_y)/good_bad
             score1 *= len(posts1[x])
 
         score2 = 0.1
         if len(posts2[x]) > 0:
             for y in posts2[x]:
                 len_y = len(guids2[y])
-                if y > 2:
-                    score1 += math.sqrt(1.0/len_y)
+                if y > 1:
+                    score2 += math.sqrt(len_y)*good_bad
             score2 *= len(posts2[x])
         scores.append(score1/score2)
 
