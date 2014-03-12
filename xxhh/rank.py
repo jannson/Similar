@@ -90,8 +90,8 @@ class Ratings(object):
                     weights1[x,y] = weights1[y,x]
                     weights2[x,y] = weights2[y,x]
 
-        weights1 = weights1/len(self.id2post)
-        weights2 = weights2/len(self.id2post)
+        #weights1 = weights1/len(self.id2post)
+        #weights2 = weights2/len(self.id2post)
 
         nx_graph = nx.from_numpy_matrix(weights1)
         scores1 = nx.pagerank_numpy(nx_graph)
@@ -99,15 +99,23 @@ class Ratings(object):
 
         nx_graph = nx.from_numpy_matrix(weights2)
         scores2 = nx.pagerank_numpy(nx_graph)
-        print 'score1 complete'
+        print 'score2 complete'
 
         scores = [scores1[i]/scores2[i] for i in xrange(len(id2post))]
         #nx_graph = nx.from_scipy_sparse_matrix(self.weights)
         #scores = nx.pagerank_scipy(nx_graph)
         res = sorted( [(scores[i],id2post[i]) for i in xrange(len(id2post))] , reverse=True)
+        res1 = sorted( [(scores1[i],id2post[i]) for i in xrange(len(id2post))] , reverse=True)
+        res2 = sorted( [(scores2[i],id2post[i]) for i in xrange(len(id2post))] , reverse=True)
 
         with open('rank.out', 'w') as f:
             for r in res:
+                f.write('%d %f\n' % (r[1], r[0]) )
+        with open('rank_1.out', 'w') as f:
+            for r in res1:
+                f.write('%d %f\n' % (r[1], r[0]) )
+        with open('rank_2.out', 'w') as f:
+            for r in res2:
                 f.write('%d %f\n' % (r[1], r[0]) )
     
 
