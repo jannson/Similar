@@ -19,9 +19,32 @@ RATE = {}
 RATE['u'] = 1
 RATE['d'] = -1
 
+def input_test():
+    all_objs = []
+    with codecs.open('trainsmall.txt', 'r', 'utf-8') as f:
+        for line in f:
+            items = line.split()
+            if len(items) > 2:
+                xh = XhLogUd()
+                xh.guid = items[0]
+                xh.post_id = int(items[1])
+                score = int(items[2])
+                if score == 1:
+                    xh.uaction = 'd'
+                else:
+                    xh.uaction = 'u'
+                xh.pos = 'z'
+                xh.shiduan = 9
+                xh.ctime = 9
+                #xh.save()
+                all_objs.append(xh)
+    return all_objs
+
 class Ratings(object):
     def __init__(self):
-        all_objs = list(XhLogUd.objects.exclude(guid=''))
+        #all_objs = list(XhLogUd.objects.exclude(guid=''))
+        all_objs = input_test()
+
         guid2id = {}
         id2guid = []
         i = 0

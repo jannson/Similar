@@ -16,20 +16,24 @@ class JsonObj(object):
         self.title = title
         self.content = content
 
+def dump_test():
+    with open('db.txt', 'w') as file:
+        file.write('[')
+        start = True
+        for obj in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
+            str_json = ''
+            if start:
+                str_json = '{"id":'
+                start = False
+            else:
+                str_json = ',{"id":'
+            str_json += str(obj.id)+',"title":'+json.JSONEncoder().encode(obj.title)
+            str_json += ',"content":'+json.JSONEncoder().encode(obj.content)+'}'
+            file.write(str_json)
+        file.write(']')
 
-with open('db.txt', 'w') as file:
-    file.write('[')
-    start = True
-    for obj in HtmlContent.objects.filter(~Q(retry=3)).filter(~Q(content='')):
-        str_json = ''
-        if start:
-            str_json = '{"id":'
-            start = False
-        else:
-            str_json = ',{"id":'
-        str_json += str(obj.id)+',"title":'+json.JSONEncoder().encode(obj.title)
-        str_json += ',"content":'+json.JSONEncoder().encode(obj.content)+'}'
-        file.write(str_json)
-    file.write(']')
+def dump_test2():
+    objs = HtmlContent.objects.filter(status=0).filter(~Q(content=''))
+    print 'len:', len(objs)
 
-
+dump_test2()

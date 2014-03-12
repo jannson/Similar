@@ -93,17 +93,15 @@ def rank2():
         if len(posts1[x]) > 0:
             for y in posts1[x]:
                 len_y = len(guids1[y])
-                if y > 1:
-                    score1 += (len_y**2)/good_bad
-            score1 *= math.sqrt(len(posts1[x])+1)
+                score1 += math.sqrt(len_y+1)/good_bad
+            score1 *= len(posts1[x])
 
         score2 = 1
         if len(posts2[x]) > 0:
             for y in posts2[x]:
                 len_y = len(guids2[y])
-                if y > 1:
-                    score2 += (len_y**2)*good_bad
-            score2 *= math.sqrt(len(posts2[x])+1)
+                score2 += math.sqrt(len_y+1)*good_bad
+            score2 *= len(posts2[x])
         scores.append(score1/score2)
 
     res = sorted( [(scores[i],id2post[i]) for i in xrange(len(id2post))] , reverse=True)

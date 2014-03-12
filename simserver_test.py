@@ -47,8 +47,8 @@ def iter_corpus():
             print 'processing', obj.id
         yield doc
 
-#server = SessionServer('/tmp/server')
-server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
+server = SessionServer('/tmp/server')
+#server = Pyro4.Proxy(Pyro4.locateNS().lookup('gensim.testserver'))
 def train_server():
     training_corpus = iter_documents()
     #training_corpus = iter_corpus()
@@ -77,7 +77,7 @@ def reset_ids():
     server.delete(ids_del)
 
 #update_keywords()
-#train_server()
+train_server()
 #reset_ids()
 
 def search(content):
