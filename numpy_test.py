@@ -51,3 +51,10 @@ b = np.array([[7,8],[9,10],[11,12]])
 #print a.mean(axis=0)
 print b[[1,1,0]]
 
+ar = np.array([[1,2,3],[4,5,6],[7,8,9],[10,11,12]])
+print '\nar', ar[:,-1:]
+print 'repeat', np.repeat(ar[:, -1:], 5, axis=1)
+print 'some cols', ar[:, 1:2]
+
+print 'random test', np.random.random([5,3])
+
