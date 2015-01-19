@@ -14,7 +14,7 @@ print(rcsetup.all_backends)
 #http://www.bogotobogo.com/python/OpenCV_Python/python_opencv3_matplotlib_rgb_brg_image_load_display_save.php
 #http://stackoverflow.com/questions/7534453/matplotlib-does-not-show-my-drawings-although-i-call-pyplot-show
 
-file_img = '/home/janson/downloads/z2.jpg'
+file_img = '/home/janson/download/z2.jpg'
 
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
@@ -35,7 +35,7 @@ def im2arr(img):
             data[i,j] = r
     return data
 
-def thumbnail(infile='/home/janson/downloads/z.jpg'):
+def thumbnail(infile='/home/janson/download/z.jpg'):
     try:
         img = Image.open(infile)
         size = (128,128)
@@ -101,7 +101,7 @@ def paint(img):
     plt.show()
 
 def paint2():
-    fname = '/home/janson/downloads/z2.png'
+    fname = '/home/janson/download/z2.png'
     image = Image.open(fname).convert("L")
     arr = np.asarray(image)
     plt.imshow(arr, cmap = cm.Greys_r)

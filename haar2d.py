@@ -12,11 +12,11 @@ def _debug(something):
 def haar2d(image, levels, debug=False):
     """
     2D Haar wavelet decomposition for levels=levels.
-    
+
     Parameters
     ----------
     image: nd-array
-        Input image 
+        Input image
     levels: int
         Number of wavelet levels to compute
     debug:
@@ -25,14 +25,14 @@ def haar2d(image, levels, debug=False):
     Returns
     -------
     haarImage: nd-array
-       An image containing the Haar decomposition of the input image. 
+       An image containing the Haar decomposition of the input image.
        Might be larger than the input image.
 
     See also
     --------
     register.features.ihaar2d
     """
-    global __debug 
+    global __debug
     __debug = debug
     assert len(image.shape) == 2, 'Must be 2D image!'
     origRows, origCols = image.shape
@@ -55,22 +55,23 @@ def haar2d(image, levels, debug=False):
     image[origRows:, :] = bottomFill
     _debug("Padded image is: %d x %d" % (image.shape[0], image.shape[1]))
 
+    num = 0.5 #0.7071
     haarImage = image
     for level in range(1,levels+1):
         halfRows = image.shape[0] / 2 ** level
         halfCols = image.shape[1] / 2 ** level
         _image = image[:halfRows*2, :halfCols*2]
         # rows
-        lowpass = (_image[:, :-1:2] + _image[:, 1::2]) / 2
-        higpass = (_image[:, :-1:2] - _image[:, 1::2]) / 2
+        lowpass = (_image[:, :-1:2] + _image[:, 1::2]) * num
+        higpass = (_image[:, :-1:2] - _image[:, 1::2]) * num
         _image[:, :_image.shape[1]/2] = lowpass
         _image[:, _image.shape[1]/2:] = higpass
         # cols
-        lowpass = (_image[:-1:2, :] + _image[1::2, :]) / 2
-        higpass = (_image[:-1:2, :] - _image[1::2, :]) / 2
+        lowpass = (_image[:-1:2, :] + _image[1::2, :]) * num
+        higpass = (_image[:-1:2, :] - _image[1::2, :]) * num
         _image[:_image.shape[0]/2, :] = lowpass
         _image[_image.shape[0]/2:, :] = higpass
-        haarImage[:halfRows*2, :halfCols*2] = _image    
+        haarImage[:halfRows*2, :halfCols*2] = _image
 
     _debug(haarImage)
     return haarImage
@@ -78,11 +79,11 @@ def haar2d(image, levels, debug=False):
 def ihaar2d(image, levels, debug=False):
     """
     2D Haar wavelet decomposition inverse for levels=levels.
-    
+
     Parameters
     ----------
     image: nd-array
-        Input image 
+        Input image
     levels: int
         Number of wavelet levels to de-compute
     debug:
@@ -91,13 +92,13 @@ def ihaar2d(image, levels, debug=False):
     Returns
     -------
     image: nd-array
-       An image containing the inverse Haar decomposition of the input image. 
+       An image containing the inverse Haar decomposition of the input image.
 
     See also
     --------
     register.features.haar2d
-    """    
-    global __debug 
+    """
+    global __debug
     __debug = debug
     assert len(image.shape) == 2, 'Must be 2D image!'
     origRows, origCols = image.shape
@@ -116,7 +117,7 @@ def ihaar2d(image, levels, debug=False):
         # cols
         lowpass = image[:halfRows*2, :halfCols].copy()
         higpass = image[:halfRows*2, halfCols:halfCols*2].copy()
-        image[:halfRows*2, :halfCols*2-1:2] = lowpass + higpass 
+        image[:halfRows*2, :halfCols*2-1:2] = lowpass + higpass
         image[:halfRows*2, 1:halfCols*2:2] = lowpass - higpass
         _debug(image)
         # rows
