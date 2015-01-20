@@ -51,11 +51,11 @@ static void haar2D(Unit a[])
       }
       // Write back subtraction results:
       memcpy(a+i+h1, t, h1*sizeof(a[0]));
-      print_arr(a);
     }
     // Fix first element of each row:
     a[i] *= C;	// C = 1/sqrt(NUM_PIXELS)
   }
+  //print_arr(a);
 
   // scale by 1/sqrt(128) = 0.08838834764831843:
   /*
@@ -89,6 +89,41 @@ static void haar2D(Unit a[])
   }
 }
 
+#define X(i,j) x[(i)*N+(j)]
+static void ihaar2d(double x[], int N) {
+    double e[N / 2], o[N / 2];
+    int i;
+    for(i = 0; i < N; i++) {
+        int n;
+        for(n = 1; n <= N / 2; n *= 2) {
+            int k;
+            for(k = 0; k < n; k++) {
+                e[k] = (X(i, k) + X(i, k + n)) / sqrt(2.0);
+                o[k] = (X(i, k) - X(i, k + n)) / sqrt(2.0);
+            }
+            for(k = 0; k < n; k++) {
+                X(i, 2 * k) = e[k];
+                X(i, 2 * k + 1) = o[k];
+            }
+            print_arr(x);
+        }
+    }
+    for(i = 0; i < N; i++) {
+        int n;
+        for(n = 1; n <= N / 2; n *= 2) {
+            int k;
+            for(k = 0; k < n; k++) {
+                e[k] = (X(k, i) + X(k + n, i)) / sqrt(2.0);
+                o[k] = (X(k, i) - X(k + n, i)) / sqrt(2.0);
+            }
+            for(k = 0; k < n; k++) {
+                X(2 * k, i) = e[k];
+                X(2 * k + 1, i) = o[k];
+            }
+        }
+    }
+}
+
 int main()
 {
     //Unit a[NUM_PIXELS_SQUARED] = {83.000000 53.000000 93.000000 63.000000 82.000000 71.000000 44.000000 49.000000 51.000000 33.000000 63.000000 12.000000 78.000000 98.000000 34.000000 39.000000};
@@ -99,9 +134,12 @@ int main()
     //    a[i] = (rand() % 100);
     //}
 
-    print_arr(a);
-    haar2D(a);
+    //print_arr(a);
 
+    haar2D(a);
     print_arr(a);
+
+    ihaar2d(a, 4);
+    //print_arr(a);
 }
 
