@@ -1,20 +1,21 @@
 import numpy as np
 import pywt
-from PIL import Image
+from PIL import Image, ImageOps
 import colorsys
 import matplotlib
 import matplotlib.pyplot as plt
 import matplotlib.image as mpimg
 import matplotlib.cm as cm
 import matplotlib.rcsetup as rcsetup
+from haar2d import haar2d, ihaar2d
 
-print matplotlib.matplotlib_fname()
-print(rcsetup.all_backends)
+#print matplotlib.matplotlib_fname()
+#print(rcsetup.all_backends)
 
 #http://www.bogotobogo.com/python/OpenCV_Python/python_opencv3_matplotlib_rgb_brg_image_load_display_save.php
 #http://stackoverflow.com/questions/7534453/matplotlib-does-not-show-my-drawings-although-i-call-pyplot-show
 
-file_img = '/home/janson/download/z2.jpg'
+file_img = '/home/janson/downloads/z2.jpg'
 
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
@@ -35,12 +36,13 @@ def im2arr(img):
             data[i,j] = r
     return data
 
-def thumbnail(infile='/home/janson/download/z.jpg'):
+def thumbnail(infile='/home/janson/downloads/z.jpg'):
     try:
         img = Image.open(infile)
         size = (128,128)
-        img.thumbnail(size, Image.ANTIALIAS)
-        img.save(file_img, "JPEG")
+        #img.thumbnail(size, Image.ANTIALIAS)
+        thub = ImageOps.fit(img, size, Image.ANTIALIAS)
+        thub.save(file_img, "JPEG")
     except IOError:
         print "cannot create thumbnail for '%s'" % infile
         return None
@@ -101,7 +103,7 @@ def paint(img):
     plt.show()
 
 def paint2():
-    fname = '/home/janson/download/z2.png'
+    fname = '/home/janson/downloads/z2.png'
     image = Image.open(fname).convert("L")
     arr = np.asarray(image)
     plt.imshow(arr, cmap = cm.Greys_r)
@@ -122,7 +124,8 @@ def im2arr_3(img):
     pixels = im.load()
     for i in range(row):
         for j in range(col):
-            r,g,b =  rgb2yiq(*pixels[i,j])
+            #r,g,b =  rgb2yiq(*pixels[i,j])
+            r,g,b =  pixels[i,j]
             arr_r[i,j] = r
             arr_g[i,j] = g
             arr_b[i,j] = b
@@ -197,14 +200,18 @@ def test_yiq3():
 
     #s = np.array([145.0, 149.0, 152.0])/255
     s = np.asarray(a, dtype='float')/255
+    s2 = np.random.random(s.shape)
+    s3 = np.asarray([s,s2], dtype='float')
+    print s3.shape
     tranform = np.array([[0.299, 0.587, 0.114], [0.596, -0.275, -0.321], [0.212, -0.523, 0.311]])
-    y = s[0]*0.299 + s[1]*0.587 + s[2]*0.114
+    y = s[0][0]*0.299 + s[0][1]*0.587 + s[0][2]*0.114
     z = np.array([tranform[0][0], tranform[1][0], tranform[2][0]])
-    #print y
+    print y
+    print colorsys.rgb_to_yiq(*s[-1])
     #print tranform[0], np.dot(s, z)
     #print s
     #print tranform
-    print np.dot(s, tranform.T)
+    print np.dot(s3, tranform.T)
 
 def test_03():
     db8 = pywt.Wavelet('db8')
@@ -223,6 +230,57 @@ def test_03():
 
     fig.tight_layout()
 
+def test_04():
+    #ar = np.array([[[1,2,3,4,5,6],[11,22,33,44,55,66],[21,22,23,24,25,26]], [[1,2,3,4,5,6],[11,22,33,44,55,66],[21,22,23,24,25,26]]])
+    #print ar.shape
+    #print ar[:,:,1:2].shape
+    image = np.random.random([10,5,3]) * 10
+    img3 = image[:,:,1:2]
+    img2 = np.zeros((10,5))
+    for i in range(10):
+        for j in range(5):
+            img2[i,j] = img3[i,j,0]
+    print img2
+    print image[:,:,1:2].reshape(image.shape[0], image.shape[1])
+
+def test_haar2d(img):
+    im = Image.open(img)
+    arr = np.asarray(im, dtype='float')
+    arr = arr/255
+    #arr = arr[0:5,0:5]
+
+    arr2 = arr.copy()
+    row, col = arr.shape[0], arr.shape[1]
+
+    assert (arr - arr2 < 0.0001).all()
+
+    tranform = np.array([[0.299, 0.587, 0.114], [0.596, -0.275, -0.321], [0.212, -0.523, 0.311]])
+
+    print arr[0,0]
+    print np.dot(arr[0,0], tranform.T)
+    print colorsys.rgb_to_yiq(*arr[0,0])
+
+    arr = np.dot(arr, tranform.T)
+
+    arr_r,arr_g,arr_b = (np.zeros([row, col]), np.zeros([row, col]), np.zeros([row, col]))
+    arr3 = arr.copy()
+    for i in range(row):
+        for j in range(col):
+            r,g,b =  colorsys.rgb_to_yiq(*arr2[i,j])
+            arr_r[i,j] = r
+            arr_g[i,j] = g
+            arr_b[i,j] = b
+            arr3[i,j] = [r,g,b]
+
+    assert (arr - arr3 < 0.01).all()
+
+    images = np.array([arr[:,:,:1].reshape(row, col), arr[:,:,1:2].reshape(row, col), arr[:,:,2:].reshape(row, col)])
+
+    assert (images[0] - arr_r < 0.01).all()
+
+    haars = [haar2d(images[i]) for i in range(images.shape[0])]
+
+
 
 #thumbnail()
 #print im2arr(file_img)
@@ -230,9 +288,11 @@ def test_03():
 #paint(file_img)
 #paint2()
 #new_img()
-test_02(file_img)
+#test_02(file_img)
 #test_yiq()
 #test_03()
 #test_yiq2()
 #test_yiq3()
+#test_04()
 
+test_haar2d(file_img)
