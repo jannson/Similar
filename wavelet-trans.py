@@ -15,7 +15,7 @@ from haar2d import haar2d, ihaar2d
 #http://www.bogotobogo.com/python/OpenCV_Python/python_opencv3_matplotlib_rgb_brg_image_load_display_save.php
 #http://stackoverflow.com/questions/7534453/matplotlib-does-not-show-my-drawings-although-i-call-pyplot-show
 
-file_img = '/home/janson/downloads/z2.jpg'
+file_img = '/home/janson/download/z2.jpg'
 
 def rgb2gray(rgb):
     return np.dot(rgb[...,:3], [0.299, 0.587, 0.144])
@@ -36,7 +36,7 @@ def im2arr(img):
             data[i,j] = r
     return data
 
-def thumbnail(infile='/home/janson/downloads/z.jpg'):
+def thumbnail(infile='/home/janson/download/z.jpg'):
     try:
         img = Image.open(infile)
         size = (128,128)
@@ -103,7 +103,7 @@ def paint(img):
     plt.show()
 
 def paint2():
-    fname = '/home/janson/downloads/z2.png'
+    fname = '/home/janson/download/z2.png'
     image = Image.open(fname).convert("L")
     arr = np.asarray(image)
     plt.imshow(arr, cmap = cm.Greys_r)
@@ -245,7 +245,12 @@ def test_04():
 
 def test_haar2d(img):
     im = Image.open(img)
+    #im.show()
     arr = np.asarray(im, dtype='float')
+
+    #plt.imshow(arr, cmap = cm.Greys_r)
+    #plt.show()
+
     arr = arr/255
     #arr = arr[0:5,0:5]
 
@@ -256,9 +261,9 @@ def test_haar2d(img):
 
     tranform = np.array([[0.299, 0.587, 0.114], [0.596, -0.275, -0.321], [0.212, -0.523, 0.311]])
 
-    print arr[0,0]
-    print np.dot(arr[0,0], tranform.T)
-    print colorsys.rgb_to_yiq(*arr[0,0])
+    #print arr[0,0]
+    #print np.dot(arr[0,0], tranform.T)
+    #print colorsys.rgb_to_yiq(*arr[0,0])
 
     arr = np.dot(arr, tranform.T)
 
@@ -275,12 +280,48 @@ def test_haar2d(img):
     assert (arr - arr3 < 0.01).all()
 
     images = np.array([arr[:,:,:1].reshape(row, col), arr[:,:,1:2].reshape(row, col), arr[:,:,2:].reshape(row, col)])
-
     assert (images[0] - arr_r < 0.01).all()
 
-    haars = [haar2d(images[i]) for i in range(images.shape[0])]
+    colors = images.shape[0]
 
+    haars = [haar2d(images[i]) for i in range(colors)]
+    #print haars[0].shape
+    #print row, col
+    #print haars[0] - images[0]
+    assert not (images[0] - haars[0] < 0.1).all()
 
+    haars = [haars[i].reshape(row*col) for i in range(colors)]
+
+    lefts = 128
+    inds = [np.argpartition(np.absolute(haars[i]), 0-lefts)[:((row**2)-lefts)] for i in range(colors)]
+    print inds[0].shape
+    #reversed_inds = [list(set(range(row**2)) - set(inds[i])) for i in range(colors)]
+
+    for i in range(colors):
+        haars[i][inds[i]] = np.zeros(inds[i].shape[0])
+
+    haars = [haars[i].reshape([row, col]) for i in range(colors)]
+
+    ihaars = [ihaar2d(haars[i]) for i in range(colors)]
+
+    #assert (images[0] - ihaars[0] < 0.1).all()
+
+    for i in range(row):
+        for j in range(col):
+            r,g,b =  colorsys.yiq_to_rgb(ihaars[0][i,j], ihaars[1][i,j], ihaars[2][i,j])
+            arr3[i,j] = [r,g,b]
+    arr3 = arr3*255
+
+    #arr3 = arr3.astype(numpy.int32, copy=False)
+    #plt.imshow(arr3, cmap = cm.Greys_r)
+    #plt.show()
+
+    img = Image.new('RGB', [row,col])
+    pixels = img.load()
+    for i in range(row):
+        for j in range(col):
+            pixels[j,i] = (int(arr3[i,j][0]), int(arr3[i,j][1]), int(arr3[i,j][2]))
+    img.show()
 
 #thumbnail()
 #print im2arr(file_img)
@@ -296,3 +337,4 @@ def test_haar2d(img):
 #test_04()
 
 test_haar2d(file_img)
+

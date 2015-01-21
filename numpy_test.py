@@ -58,3 +58,22 @@ print 'some cols', ar[:, 1:2]
 
 print 'random test', np.random.random([5,3])
 
+ar = np.array([9, 4, 4, 3, 3, 9, 0, 4, 6, 0])
+ind = np.argpartition(ar, -2)[:ar.shape[0]-2]
+print ind
+print ar[ind]
+#print list(set(range(ar.shape[0])) - set([n for n in ind]))
+#print np.argpartition(ar, -4)[:ar.shape[0]-4]
+#print ar[ind]
+#print ind[np.argsort(ar[ind])]
+#print ar
+#print ar[ind]
+#ar[ind] = np.zeros(ind.shape[0])
+#print ar
+
+#ar = ar.reshape([ar.shape[0]/2, 2])
+#print ar
+#ind = np.argpartition(ar, -2, axis=1)
+#print ind
+
+#print ar.reshape(ar.shape[0]*ar.shape[1])
