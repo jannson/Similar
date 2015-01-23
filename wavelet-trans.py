@@ -292,7 +292,7 @@ def test_haar2d(img):
 
     haars = [haars[i].reshape(row*col) for i in range(colors)]
 
-    lefts = 128
+    lefts = 41
     inds = [np.argpartition(np.absolute(haars[i]), 0-lefts)[:((row**2)-lefts)] for i in range(colors)]
     print inds[0].shape
     #reversed_inds = [list(set(range(row**2)) - set(inds[i])) for i in range(colors)]
@@ -361,7 +361,7 @@ def test_haar2d2(img):
 #test_yiq2()
 #test_yiq3()
 #test_04()
-#test_haar2d(file_img)
-
-test_haar2d2(file_img)
+file_img = '/home/janson/download/testimg/thumb/6.jpeg'
+test_haar2d(file_img)
+#test_haar2d2(file_img)
 
