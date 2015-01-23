@@ -323,6 +323,32 @@ def test_haar2d(img):
             pixels[j,i] = (int(arr3[i,j][0]), int(arr3[i,j][1]), int(arr3[i,j][2]))
     img.show()
 
+def test_haar2d2(img):
+    im = Image.open(img)
+    arr = np.asarray(im, dtype='float')
+    row, col = arr.shape[0], arr.shape[1]
+    tranform = np.array([[0.299, 0.587, 0.114], [0.596, -0.275, -0.321], [0.212, -0.523, 0.311]])
+    arr = np.dot(arr, tranform.T)
+
+    images = [arr[:,:,:1].reshape(row, col), arr[:,:,1:2].reshape(row, col), arr[:,:,2:].reshape(row, col)]
+    colors = 3
+    haars = [haar2d(images[i]).reshape(row*col) for i in range(colors)]
+    avgl = [0.0, 0.0, 0.0]
+    avgl = [haars[i][0]/(256*128) for i in range(colors)]
+    for i in range(colors):
+        haars[i][0] = 0.0
+    print 'avgl', avgl
+
+    lefts = 40
+    inds = [np.argpartition(np.absolute(haars[i]), 0-lefts)[-lefts:] for i in range(colors)] #lefts
+    haars = [haars[i][inds[i]] for i in range(colors)] #value in lefts
+    big_i = [(haars[i] > 0) for i in range(colors)]
+    small_i = [(haars[i] < 0) for i in range(colors)]
+
+    for i in range(colors):
+        print inds[i][big_i[i]]
+        print inds[i][small_i[i]]
+
 #thumbnail()
 #print im2arr(file_img)
 #wtHighFreq(file_img)
@@ -335,6 +361,7 @@ def test_haar2d(img):
 #test_yiq2()
 #test_yiq3()
 #test_04()
+#test_haar2d(file_img)
 
-test_haar2d(file_img)
+test_haar2d2(file_img)
 
