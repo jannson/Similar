@@ -38,7 +38,7 @@ print words[ar==1]
 
 a = np.array([[4,9,2],[5,1,3]])
 idx = np.argsort(a[1])
-print idx
+print "idx", idx
 print idx[::-1]
 print a[:,idx]
 print '\n'

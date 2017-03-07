@@ -4,7 +4,7 @@ import numpy as np
 from PIL import Image, ImageOps
 from haar2d import haar2d, ihaar2d
 
-file_dir = '/home/janson/download/testimg'
+file_dir = '/home/janson/downloads/testimg'
 thumb = 'thumb'
 
 def thumbnail(infile):
@@ -38,8 +38,11 @@ for i in range(5):
     for j in range(5):
         img_bin[i*128 + j] = max(i,j)
 
-def index_image(id, img):
-    im = Image.open(img)
+def index_image(id, img_file):
+    img = Image.open(img_file)
+    size = (128,128)
+    im = img.resize(size)
+
     arr = np.asarray(im, dtype='float')
     row, col = arr.shape[0], arr.shape[1]
     tranform = np.array([[0.299, 0.587, 0.114], [0.596, -0.275, -0.321], [0.212, -0.523, 0.311]])
@@ -63,11 +66,16 @@ def index_image(id, img):
         big = (haar > 0)
         origin_small = ind[small]
         origin_big = ind[big]
+        #print "i is :", i, "neg is:"
+        #print origin_small
+        #print "pos is :"
+        #print origin_big
         for j in origin_small:
             imgbuckets[i][0][j].append(id)
         for j in origin_big:
             imgbuckets[i][1][j].append(id)
 
+    print avgl
     dbspace["sigs"][id] = avgl
 
 def query_img(img):
@@ -75,7 +83,8 @@ def query_img(img):
     sigs = dbspace["sigs"]
 
     #TODO do in a function
-    im = Image.open(img)
+    im2 = Image.open(img)
+    im = im2.resize((128,128))
     arr = np.asarray(im, dtype='float')
     row, col = arr.shape[0], arr.shape[1]
     tranform = np.array([[0.299, 0.587, 0.114], [0.596, -0.275, -0.321], [0.212, -0.523, 0.311]])
@@ -134,15 +143,27 @@ def normalizeResults(results):
     return res
 
 def index_all():
-    data_dir = os.path.join(file_dir, thumb)
+    #data_dir = os.path.join(file_dir, thumb)
+    data_dir = "/opt/projects/source/iLab/dataset/demo1"
     for d in os.listdir(data_dir):
         f = os.path.join(data_dir, d)
-        if os.path.isfile(f) and d.endswith(".jpeg"):
+        if os.path.isfile(f) and d.endswith(".jpg"):
             id = int(f.split('/')[-1].split('.')[0])
             index_image(id, f)
 
-#thumb_all()
-#index_image(1, '/home/janson/download/z2.jpg')
-index_all()
-print query_img('/home/janson/download/testimg/thumb/1.jpeg')
+def trans_img(infile):
+    try:
+        img = Image.open(infile)
+        size = (128,128)
+        im1 = img.resize(size)
+        im1.show()
+    except IOError:
+        print "cannot create thumbnail for '%s'" % infile
+        return None
 
+#img_file = '/home/janson/downloads/z3.jpg'
+#thumb_all()
+#index_image(1, img_file)
+index_all()
+print query_img('/opt/projects/source/iLab/dataset/demo1/1.jpg')
+#trans_img('/home/janson/downloads/z3.jpg')
