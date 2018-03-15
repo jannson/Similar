@@ -1,9 +1,6 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
 
-from bm25 import BM25
-import math
-
 class TextRank(object):
     def __init__(self, weight):
         self.D = len(weight[0])
@@ -88,3 +85,4 @@ class KeywordTextRank(object):
 
     def top(self, limit):
         return list(map(lambda x: self.docs[x[0]], self.top))
+
