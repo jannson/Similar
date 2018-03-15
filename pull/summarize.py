@@ -35,3 +35,4 @@ if __name__ == '__main__':
     ext = Extractor(url="http://news.cctv.com/2018/03/14/ARTIae5nIxMetJzk20Gk8Vw7180314.shtml",blockSize=5, image=False)
     content = ext.getContext()
     print(repr(key_rank(content)).decode('unicode-escape'))
+    print(sum_rank(content))
